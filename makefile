@@ -8,7 +8,7 @@ restore:
 
 .PHONY: db
 db:
-	dotnet dotnet ef database update --project Cine-Plus-Api
+	dotnet ef database update --project Cine-Plus-Api
 
 .PHONY: build
 build:
