@@ -18,6 +18,8 @@ var connectionString = configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CinePlusContext>(options =>
     options.UseMySQL(connectionString!));
 
+builder.Services.AddScoped<IMovieCommandHandler, MovieCommandHandler>();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
