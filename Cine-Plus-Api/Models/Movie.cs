@@ -15,6 +15,8 @@ public class Movie
 
     [Required] public int Rating { get; set; }
 
+    [Required] public long Duration { get; set; }
+
     [ForeignKey("Director")] public int DirectorId { get; set; }
 
     public Director Director { get; set; } = null!;
