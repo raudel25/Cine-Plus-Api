@@ -15,7 +15,7 @@ public class Discount
 
     [Required] public string Description { get; set; } = null!;
 
-    [Required] private double DiscountPercent { get; set; }
+    [Required] public double DiscountPercent { get; set; }
 
     public ICollection<ShowMovie> ShowMovies { get; set; } = null!;
 }
