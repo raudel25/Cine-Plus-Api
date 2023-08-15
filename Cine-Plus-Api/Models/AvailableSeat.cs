@@ -9,6 +9,8 @@ public class AvailableSeat
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
+    [Required] public double Price { get; set; }
+
     [Required] public int Number { get; set; }
 
     [ForeignKey("ShowMovie")] public int ShowMovieId { get; set; }

@@ -32,7 +32,7 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
         this._context.ShowMovies.Add(showMovie);
         await this._context.SaveChangesAsync();
 
-        await CreateAvailableSeats(showMovie);
+        // await CreateAvailableSeats(showMovie);
 
         return showMovie.Id;
     }
