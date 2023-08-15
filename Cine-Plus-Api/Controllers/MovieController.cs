@@ -20,4 +20,12 @@ public class MovieController : ControllerBase
     {
         return await this._movieCommand.Handler(request);
     }
+
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> Remove(int id)
+    {
+        await this._movieCommand.Handler(id);
+
+        return Ok();
+    }
 }
