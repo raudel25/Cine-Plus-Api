@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using Cine_Plus_Api.Models;
 
-namespace Cine_Plus_Api.CommandsRequest;
+namespace Cine_Plus_Api.Requests;
 
 public class CreateShowMovie
 {

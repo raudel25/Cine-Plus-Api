@@ -1,4 +1,4 @@
-using Cine_Plus_Api.CommandsRequest;
+using Cine_Plus_Api.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Cine_Plus_Api.Commands;
 using Cine_Plus_Api.Queries;
