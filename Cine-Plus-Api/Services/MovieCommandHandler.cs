@@ -1,5 +1,4 @@
 using Cine_Plus_Api.Commands;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cine_Plus_Api.Services;
 
