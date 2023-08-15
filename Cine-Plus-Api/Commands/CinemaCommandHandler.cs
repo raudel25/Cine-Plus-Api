@@ -1,7 +1,8 @@
-using Cine_Plus_Api.Commands;
+using Cine_Plus_Api.CommandsRequest;
+using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cine_Plus_Api.Services;
+namespace Cine_Plus_Api.Commands;
 
 public interface ICinemaCommandHandler
 {

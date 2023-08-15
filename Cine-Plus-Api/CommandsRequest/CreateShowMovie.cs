@@ -1,6 +1,6 @@
 using Cine_Plus_Api.Models;
 
-namespace Cine_Plus_Api.Commands;
+namespace Cine_Plus_Api.CommandsRequest;
 
 public class CreateShowMovie
 {

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Cine_Plus_Api.Services;
 
-namespace Cine_Plus_Api.Services;
-
+namespace Cine_Plus_Api.Commands;
 public interface IMoviePropCommandHandler
 {
     public Task UpdateActors(int id);

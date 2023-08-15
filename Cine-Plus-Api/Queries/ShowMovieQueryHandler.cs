@@ -1,7 +1,8 @@
 using Cine_Plus_Api.Models;
+using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cine_Plus_Api.Services;
+namespace Cine_Plus_Api.Queries;
 
 public interface IShowMovieQueryHandler
 {

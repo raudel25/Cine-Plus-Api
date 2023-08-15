@@ -1,8 +1,10 @@
-using Cine_Plus_Api.Commands;
+using Cine_Plus_Api.CommandsRequest;
 using Cine_Plus_Api.Models;
+using Cine_Plus_Api.Services;
+using Cine_Plus_Api.Queries;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cine_Plus_Api.Services;
+namespace Cine_Plus_Api.Commands;
 
 public interface IMovieCommandHandler
 {

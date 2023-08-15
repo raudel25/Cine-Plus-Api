@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Cine_Plus_Api.Services;
-
+using Cine_Plus_Api.Commands;
+using Cine_Plus_Api.Queries;
 
 var builder = WebApplication.CreateBuilder(args);
 

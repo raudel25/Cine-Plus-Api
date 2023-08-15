@@ -1,25 +1,12 @@
 using Cine_Plus_Api.Models;
 
-namespace Cine_Plus_Api.Commands;
+namespace Cine_Plus_Api.CommandsRequest;
 
-public class CreateMovie
+public class UpdateMovie : CreateMovie
 {
-    public string Name { get; set; } = null!;
+    public int Id { get; set; }
 
-    public bool CubanCine { get; set; }
-
-    public int Rating { get; set; }
-
-    public long Duration { get; set; }
-
-    public string Director { get; set; } = null!;
-    
-
-    public string Genre { get; set; } = null!;
-
-    public ICollection<string> Actors { get; set; } = null!;
-
-    public Movie Movie()
+    public new Movie Movie()
     {
         var director = new Director { Name = this.Director };
         var genre = new Genre { Name = this.Director };
@@ -27,6 +14,7 @@ public class CreateMovie
 
         return new Movie
         {
+            Id = this.Id,
             Actors = actors, CubanCine = this.CubanCine, Director = director, Genre = genre, Name = this.Name,
             Rating = this.Rating
         };
