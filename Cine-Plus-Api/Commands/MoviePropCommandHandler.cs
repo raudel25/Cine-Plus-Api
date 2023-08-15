@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Cine_Plus_Api.Services;
 
 namespace Cine_Plus_Api.Commands;
+
 public interface IMoviePropCommandHandler
 {
     public Task UpdateActors(int id);
@@ -9,6 +10,8 @@ public interface IMoviePropCommandHandler
     public Task UpdateDirectors(int id);
 
     public Task UpdateGenres(int id);
+
+    public Task UpdateCountries(int id);
 }
 
 public class MoviePropCommandHandler : IMoviePropCommandHandler
@@ -52,6 +55,18 @@ public class MoviePropCommandHandler : IMoviePropCommandHandler
         if (genre is not null && genre.Movies.Count == 0)
         {
             this._context.Genres.Remove(genre);
+            await this._context.SaveChangesAsync();
+        }
+    }
+
+    public async Task UpdateCountries(int id)
+    {
+        var country = await this._context.Countries.Include(country => country.Movies)
+            .SingleOrDefaultAsync(country => country.Id == id);
+
+        if (country is not null && country.Movies.Count == 0)
+        {
+            this._context.Countries.Remove(country);
             await this._context.SaveChangesAsync();
         }
     }

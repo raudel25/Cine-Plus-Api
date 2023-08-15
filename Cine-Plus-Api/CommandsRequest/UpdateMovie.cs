@@ -11,11 +11,12 @@ public class UpdateMovie : CreateMovie
         var director = new Director { Name = this.Director };
         var genre = new Genre { Name = this.Director };
         var actors = Actors.Select((actor) => new Actor { Name = actor }).ToList();
+        var country = new Country { Name = this.Country };
 
         return new Movie
         {
             Id = this.Id,
-            Actors = actors, CubanCine = this.CubanCine, Director = director, Genre = genre, Name = this.Name,
+            Actors = actors, Country = country, Director = director, Genre = genre, Name = this.Name,
             Rating = this.Rating
         };
     }

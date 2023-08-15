@@ -12,9 +12,7 @@ public class Movie
     public int Id { get; set; }
 
     [Required] public string Name { get; set; } = null!;
-
-    [Required] public bool CubanCine { get; set; }
-
+    
     [Required] public int Rating { get; set; }
 
     [Required] public long Duration { get; set; }
@@ -26,6 +24,10 @@ public class Movie
     [ForeignKey("Genre")] public int GenreId { get; set; }
 
     public Genre Genre { get; set; } = null!;
+    
+    [ForeignKey("Country")] public int CountryId { get; set; }
+
+    public Country Country { get; set; } = null!;
 
     public ICollection<Actor> Actors { get; set; } = null!;
 }

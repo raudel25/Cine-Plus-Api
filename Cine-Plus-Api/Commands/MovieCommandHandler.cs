@@ -44,13 +44,15 @@ public class MovieCommandHandler : IMovieCommandHandler
 
         var director = await this._moviePropQuery.Director(movie.Director.Name) ?? movie.Director;
         var genre = await this._moviePropQuery.Genre(movie.Genre.Name) ?? movie.Genre;
+        var country = await this._moviePropQuery.Country(movie.Country.Name) ?? movie.Country;
 
         movie.Actors = actors;
         movie.Director = director;
         movie.Genre = genre;
+        movie.Country = country;
     }
 
-    private async Task UpdateMovieProps(IEnumerable<int> actors, int director, int genre)
+    private async Task UpdateMovieProps(IEnumerable<int> actors, int director, int genre, int country)
     {
         foreach (var actor in actors)
         {
@@ -59,17 +61,18 @@ public class MovieCommandHandler : IMovieCommandHandler
 
         await this._moviePropCommand.UpdateDirectors(director);
         await this._moviePropCommand.UpdateGenres(genre);
+        await this._moviePropCommand.UpdateCountries(country);
     }
 
-    private async Task<(IEnumerable<int>, int, int)> LastMovieProp(int id)
+    private async Task<(IEnumerable<int>, int, int, int)> LastMovieProp(int id)
     {
         var movie = await this._context.Movies.Include(movie => movie.Actors)
             .SingleOrDefaultAsync(movie => movie.Id == id);
 
         var actors = movie!.Actors.Select(actor => actor.Id).ToList();
-        var (director, genre) = (movie.DirectorId, movie.GenreId);
+        var (director, genre, country) = (movie.DirectorId, movie.GenreId, movie.CountryId);
 
-        return (actors, director, genre);
+        return (actors, director, genre, country);
     }
 
     public async Task<int> Handler(CreateMovie request)
@@ -90,12 +93,12 @@ public class MovieCommandHandler : IMovieCommandHandler
 
         await CheckExisting(movie);
 
-        var (actors, director, genre) = await LastMovieProp(movie.Id);
+        var (actors, director, genre, country) = await LastMovieProp(movie.Id);
 
         this._context.Update(movie);
         await this._context.SaveChangesAsync();
 
-        await UpdateMovieProps(actors, director, genre);
+        await UpdateMovieProps(actors, director, genre, country);
     }
 
     public async Task Handler(int id)
@@ -105,11 +108,11 @@ public class MovieCommandHandler : IMovieCommandHandler
 
         if (movie is null) return;
 
-        var (actors, director, genre) = await LastMovieProp(movie.Id);
+        var (actors, director, genre, country) = await LastMovieProp(movie.Id);
 
         this._context.Remove(movie);
         await this._context.SaveChangesAsync();
 
-        await UpdateMovieProps(actors, director, genre);
+        await UpdateMovieProps(actors, director, genre, country);
     }
 }

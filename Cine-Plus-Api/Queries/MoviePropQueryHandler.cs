@@ -12,6 +12,8 @@ public interface IMoviePropQueryHandler
     Task<Director?> Director(string name);
     Task<IEnumerable<Genre>> Genres();
     Task<Genre?> Genre(string name);
+    Task<IEnumerable<Country>> Countries();
+    Task<Country?> Country(string name);
 }
 
 public class MoviePropQueryHandler : IMoviePropQueryHandler
@@ -40,7 +42,7 @@ public class MoviePropQueryHandler : IMoviePropQueryHandler
 
     public async Task<Director?> Director(string name)
     {
-        return await this._context.Directors.SingleOrDefaultAsync(actor => actor.Name == name);
+        return await this._context.Directors.SingleOrDefaultAsync(director => director.Name == name);
     }
 
     public async Task<IEnumerable<Genre>> Genres()
@@ -50,6 +52,16 @@ public class MoviePropQueryHandler : IMoviePropQueryHandler
 
     public async Task<Genre?> Genre(string name)
     {
-        return await this._context.Genres.SingleOrDefaultAsync(actor => actor.Name == name);
+        return await this._context.Genres.SingleOrDefaultAsync(genre => genre.Name == name);
+    }
+
+    public async Task<IEnumerable<Country>> Countries()
+    {
+        return await this._context.Countries.ToListAsync();
+    }
+
+    public async Task<Country?> Country(string name)
+    {
+        return await this._context.Countries.SingleOrDefaultAsync(country => country.Name == name);
     }
 }
