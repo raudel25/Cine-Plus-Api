@@ -27,6 +27,8 @@ builder.Services.AddScoped<IShowMovieCommandHandler, ShowMovieCommandHandler>();
 builder.Services.AddScoped<IShowMovieQueryHandler, ShowMovieQueryHandler>();
 builder.Services.AddScoped<ICinemaQueryHandler, CinemaQueryHandler>();
 builder.Services.AddScoped<ICinemaCommandHandler, CinemaCommandHandler>();
+builder.Services.AddScoped<IDiscountQueryHandler, DiscountQueryHandler>();
+builder.Services.AddScoped<IDiscountCommandHandler, DiscountCommandHandler>();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

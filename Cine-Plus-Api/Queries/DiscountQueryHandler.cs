@@ -7,6 +7,8 @@ namespace Cine_Plus_Api.Queries;
 public interface IDiscountQueryHandler
 {
     Task<IEnumerable<Discount>> Handler();
+
+    Task<Discount?> Handler(int id);
 }
 
 public class DiscountQueryHandler : IDiscountQueryHandler
@@ -21,5 +23,10 @@ public class DiscountQueryHandler : IDiscountQueryHandler
     public async Task<IEnumerable<Discount>> Handler()
     {
         return await this._context.Discounts.ToListAsync();
+    }
+
+    public async Task<Discount?> Handler(int id)
+    {
+        return await this._context.Discounts.SingleOrDefaultAsync(discount => discount.Id == id);
     }
 }

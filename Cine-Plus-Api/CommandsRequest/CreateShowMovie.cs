@@ -18,7 +18,6 @@ public class CreateShowMovie
     public ShowMovie ShowMovie() =>
         new ShowMovie
         {
-            Date = this.Date, MovieId = this.MovieId, CinemaId = this.CinemaId,
-            Discounts = this.Discounts.Select(discount => new Discount { Id = discount }).ToList()
+            Date = this.Date, MovieId = this.MovieId, CinemaId = this.CinemaId
         };
 }

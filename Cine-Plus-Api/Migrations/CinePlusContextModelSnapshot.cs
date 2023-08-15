@@ -140,6 +140,9 @@ namespace Cine_Plus_Api.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<double>("DiscountPercent")
+                        .HasColumnType("double");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("varchar(255)");

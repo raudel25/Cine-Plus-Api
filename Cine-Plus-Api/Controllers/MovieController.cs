@@ -1,6 +1,8 @@
 using Cine_Plus_Api.CommandsRequest;
 using Microsoft.AspNetCore.Mvc;
 using Cine_Plus_Api.Commands;
+using Cine_Plus_Api.Models;
+using Cine_Plus_Api.Queries;
 
 namespace Cine_Plus_Api.Controllers;
 
@@ -10,15 +12,32 @@ public class MovieController : ControllerBase
 {
     private readonly IMovieCommandHandler _movieCommand;
 
-    public MovieController(IMovieCommandHandler movieCommand)
+    private readonly IMovieQueryHandler _movieQuery;
+
+    public MovieController(IMovieCommandHandler movieCommand, IMovieQueryHandler movieQuery)
     {
         this._movieCommand = movieCommand;
+        this._movieQuery = movieQuery;
+    }
+
+    [HttpGet]
+    public async Task<IEnumerable<Movie>> Get()
+    {
+        return await this._movieQuery.Handler();
     }
 
     [HttpPost]
     public async Task<ActionResult<int>> Post(CreateMovie request)
     {
         return await this._movieCommand.Handler(request);
+    }
+    
+    [HttpPut]
+    public async Task<ActionResult> Put(UpdateMovie request)
+    {
+        await this._movieCommand.Handler(request);
+        
+        return Ok();
     }
 
     [HttpDelete("{id:int}")]

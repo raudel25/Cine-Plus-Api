@@ -4,6 +4,7 @@ using Cine_Plus_Api.Services;
 using Cine_Plus_Api.Queries;
 
 namespace Cine_Plus_Api.Commands;
+
 public interface IShowMovieCommandHandler
 {
     Task<int> Handler(CreateShowMovie request);
@@ -15,17 +16,40 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
 
     private readonly IShowMovieQueryHandler _showMovieQuery;
 
-    public ShowMovieCommandHandler(CinePlusContext context, IShowMovieQueryHandler showMovieQuery)
+    private readonly IDiscountQueryHandler _discountQuery;
+
+    public ShowMovieCommandHandler(CinePlusContext context, IShowMovieQueryHandler showMovieQuery,
+        IDiscountQueryHandler discountQuery)
     {
         this._context = context;
         this._showMovieQuery = showMovieQuery;
+        this._discountQuery = discountQuery;
+    }
+
+    public async Task AddDiscounts(ShowMovie showMovie, ICollection<int> discounts)
+    {
+        var discountEntries = new List<Discount>(discounts.Count);
+
+        foreach (var discount in discounts)
+        {
+            var d = await this._discountQuery.Handler(discount);
+
+            if (d is null)
+            {
+                return;
+            }
+
+            discountEntries.Add(d);
+        }
+
+        showMovie.Discounts = discountEntries;
     }
 
     public async Task<int> Handler(CreateShowMovie request)
     {
         var showMovie = request.ShowMovie();
 
-        var possible = this._showMovieQuery.Handler(showMovie);
+        var possible = await this._showMovieQuery.Handler(showMovie);
 
         //TODO: Check possible
 
