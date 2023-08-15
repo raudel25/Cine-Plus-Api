@@ -19,6 +19,9 @@ builder.Services.AddDbContext<CinePlusContext>(options =>
     options.UseMySQL(connectionString!));
 
 builder.Services.AddScoped<IMovieCommandHandler, MovieCommandHandler>();
+builder.Services.AddScoped<IActorQueryHandler, ActorQueryHandler>();
+builder.Services.AddScoped<IDirectorQueryHandler, DirectorQueryHandler>();
+builder.Services.AddScoped<IGenreQueryHandler, GenreQueryHandler>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
