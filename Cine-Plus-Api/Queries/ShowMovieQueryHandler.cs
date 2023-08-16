@@ -10,7 +10,13 @@ public interface IShowMovieQueryHandler
 {
     Task<IEnumerable<ShowMovie>> Handler();
 
-    Task<ApiResponse> Handler(ShowMovie showMovie);
+    Task<ApiResponse> IsValid(ShowMovie showMovie);
+
+    Task<IEnumerable<ShowMovie>> AvailableMovie(int id);
+
+    Task<IEnumerable<ShowMovie>> AvailableDiscount(int id);
+
+    Task<IEnumerable<ShowMovie>> AvailableCinema(int id);
 }
 
 public class ShowMovieQueryHandler : IShowMovieQueryHandler
@@ -28,7 +34,7 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
     }
 
 
-    public async Task<ApiResponse> Handler(ShowMovie showMovie)
+    public async Task<ApiResponse> IsValid(ShowMovie showMovie)
     {
         var movie = await this._context.Movies.SingleOrDefaultAsync(movie => movie.Id == showMovie.MovieId);
         var cinema = await this._context.Cinemas.SingleOrDefaultAsync(cinema => cinema.Id == showMovie.CinemaId);
@@ -53,5 +59,32 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
         end += interval;
 
         return (start <= startMovie && startMovie <= end) || (end <= startMovie && endMovie <= end);
+    }
+
+    private bool AvailableShowMovie(ShowMovie showMovie)
+    {
+        var now = DateTime.Now;
+        return ((DateTimeOffset)now).ToUnixTimeSeconds() <= showMovie.Date;
+    }
+
+    public async Task<IEnumerable<ShowMovie>> AvailableMovie(int id)
+    {
+        return await this._context.ShowMovies
+            .Where(showMovie => AvailableShowMovie(showMovie) && showMovie.MovieId == id)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<ShowMovie>> AvailableDiscount(int id)
+    {
+        var discount = await this._context.Discounts.SingleOrDefaultAsync(discount => discount.Id == id);
+
+        return discount is null ? new List<ShowMovie>() : discount.ShowMovies.Where(AvailableShowMovie);
+    }
+
+    public async Task<IEnumerable<ShowMovie>> AvailableCinema(int id)
+    {
+        return await this._context.ShowMovies
+            .Where(showMovie => AvailableShowMovie(showMovie) && showMovie.CinemaId == id)
+            .ToListAsync();
     }
 }

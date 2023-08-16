@@ -30,6 +30,7 @@ builder.Services.AddScoped<ICinemaCommandHandler, CinemaCommandHandler>();
 builder.Services.AddScoped<IDiscountQueryHandler, DiscountQueryHandler>();
 builder.Services.AddScoped<IDiscountCommandHandler, DiscountCommandHandler>();
 builder.Services.AddScoped<IAvailableSeatsCommandHandler, AvailableSeatsCommandHandler>();
+builder.Services.AddScoped<IAvailableSeatQueryHandler, AvailableSeatQueryHandler>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

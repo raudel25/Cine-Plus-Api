@@ -57,7 +57,7 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
     {
         var showMovie = request.ShowMovie();
 
-        var checkConflict = await this._showMovieQuery.Handler(showMovie);
+        var checkConflict = await this._showMovieQuery.IsValid(showMovie);
         if (!checkConflict.Ok) return checkConflict.ConvertApiResponse<int>();
 
         var addDiscounts = await AddDiscounts(showMovie, request.Discounts);
