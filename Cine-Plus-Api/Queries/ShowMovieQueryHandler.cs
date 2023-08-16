@@ -12,11 +12,11 @@ public interface IShowMovieQueryHandler
 
     Task<ApiResponse> IsValid(ShowMovie showMovie);
 
-    Task<IEnumerable<ShowMovie>> AvailableMovie(int id);
+    Task<ICollection<ShowMovie>> AvailableMovie(int id);
 
-    Task<IEnumerable<ShowMovie>> AvailableDiscount(int id);
+    Task<ICollection<ShowMovie>> AvailableDiscount(int id);
 
-    Task<IEnumerable<ShowMovie>> AvailableCinema(int id);
+    Task<ICollection<ShowMovie>> AvailableCinema(int id);
 }
 
 public class ShowMovieQueryHandler : IShowMovieQueryHandler
@@ -67,21 +67,21 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
         return ((DateTimeOffset)now).ToUnixTimeSeconds() <= showMovie.Date;
     }
 
-    public async Task<IEnumerable<ShowMovie>> AvailableMovie(int id)
+    public async Task<ICollection<ShowMovie>> AvailableMovie(int id)
     {
         return await this._context.ShowMovies
             .Where(showMovie => AvailableShowMovie(showMovie) && showMovie.MovieId == id)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ShowMovie>> AvailableDiscount(int id)
+    public async Task<ICollection<ShowMovie>> AvailableDiscount(int id)
     {
         var discount = await this._context.Discounts.SingleOrDefaultAsync(discount => discount.Id == id);
 
-        return discount is null ? new List<ShowMovie>() : discount.ShowMovies.Where(AvailableShowMovie);
+        return discount is null ? new List<ShowMovie>() : discount.ShowMovies.Where(AvailableShowMovie).ToList();
     }
 
-    public async Task<IEnumerable<ShowMovie>> AvailableCinema(int id)
+    public async Task<ICollection<ShowMovie>> AvailableCinema(int id)
     {
         return await this._context.ShowMovies
             .Where(showMovie => AvailableShowMovie(showMovie) && showMovie.CinemaId == id)

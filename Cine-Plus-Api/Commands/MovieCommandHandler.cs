@@ -14,7 +14,7 @@ public interface IMovieCommandHandler
 
     Task<ApiResponse> Handler(UpdateMovie request);
 
-    Task Handler(int id);
+    Task<ApiResponse> Handler(int id);
 }
 
 public class MovieCommandHandler : IMovieCommandHandler
@@ -27,13 +27,16 @@ public class MovieCommandHandler : IMovieCommandHandler
 
     private readonly IMovieQueryHandler _movieQuery;
 
+    private readonly IShowMovieQueryHandler _showMovieQuery;
+
     public MovieCommandHandler(CinePlusContext context, IMoviePropQueryHandler moviePropQuery,
-        IMoviePropCommandHandler moviePropCommand, IMovieQueryHandler movieQuery)
+        IMoviePropCommandHandler moviePropCommand, IMovieQueryHandler movieQuery, IShowMovieQueryHandler showMovieQuery)
     {
         this._context = context;
         this._moviePropQuery = moviePropQuery;
         this._moviePropCommand = moviePropCommand;
         this._movieQuery = movieQuery;
+        this._showMovieQuery = showMovieQuery;
     }
 
     private async Task CheckExisting(Movie movie)
@@ -57,29 +60,6 @@ public class MovieCommandHandler : IMovieCommandHandler
         movie.Country = country;
     }
 
-    private async Task UpdateMovieProps(IEnumerable<int> actors, int director, int genre, int country)
-    {
-        foreach (var actor in actors)
-        {
-            await this._moviePropCommand.UpdateActors(actor);
-        }
-
-        await this._moviePropCommand.UpdateDirectors(director);
-        await this._moviePropCommand.UpdateGenres(genre);
-        await this._moviePropCommand.UpdateCountries(country);
-    }
-
-    private async Task<(IEnumerable<int>, int, int, int)> LastMovieProp(int id)
-    {
-        var movie = await this._context.Movies.Include(movie => movie.Actors)
-            .SingleOrDefaultAsync(movie => movie.Id == id);
-
-        var actors = movie!.Actors.Select(actor => actor.Id).ToList();
-        var (director, genre, country) = (movie.DirectorId, movie.GenreId, movie.CountryId);
-
-        return (actors, director, genre, country);
-    }
-
     public async Task<ApiResponse<int>> Handler(CreateMovie request)
     {
         var movie = request.Movie();
@@ -99,16 +79,18 @@ public class MovieCommandHandler : IMovieCommandHandler
 
     public async Task<ApiResponse> Handler(UpdateMovie request)
     {
-        var movie = request.Movie();
+        var responseMovie = await Find(request.Id);
+        if (!responseMovie.Ok) return responseMovie.ConvertApiResponse();
 
         var movieEntry = await this._movieQuery.Handler(request.Name);
 
-        if (movieEntry is not null && movieEntry.Id != movie.Id)
+        if (movieEntry is not null && movieEntry.Id != request.Id)
             return new ApiResponse(HttpStatusCode.BadRequest, "There is already a movie with the same name");
 
-        await CheckExisting(movie);
+        var (actors, director, genre, country) = LastMovieProp(responseMovie.Value!);
 
-        var (actors, director, genre, country) = await LastMovieProp(movie.Id);
+        var movie = request.Movie();
+        await CheckExisting(movie);
 
         this._context.Update(movie);
         await this._context.SaveChangesAsync();
@@ -118,18 +100,61 @@ public class MovieCommandHandler : IMovieCommandHandler
         return new ApiResponse();
     }
 
-    public async Task Handler(int id)
+    public async Task<ApiResponse> Handler(int id)
     {
-        var movie = await this._context.Movies.Include(movie => movie.Actors)
-            .SingleOrDefaultAsync(movie => movie.Id == id);
+        var responseMovie = await Find(id);
+        if (!responseMovie.Ok) return responseMovie.ConvertApiResponse();
 
-        if (movie is null) return;
+        var responseShowMovie = await FindInAvailableShowMovie(id);
+        if (!responseShowMovie.Ok) return responseShowMovie;
 
-        var (actors, director, genre, country) = await LastMovieProp(movie.Id);
+        var movie = responseMovie.Value!;
+        var (actors, director, genre, country) = LastMovieProp(movie);
 
         this._context.Remove(movie);
         await this._context.SaveChangesAsync();
 
         await UpdateMovieProps(actors, director, genre, country);
+
+        return new ApiResponse();
+    }
+
+    private async Task<ApiResponse<Movie>> Find(int id)
+    {
+        var movie = await this._context.Movies.Include(movie => movie.Actors)
+            .SingleOrDefaultAsync(movie => movie.Id == id);
+
+        return movie is null
+            ? new ApiResponse<Movie>(HttpStatusCode.NotFound, "Not found movie")
+            : new ApiResponse<Movie>(movie);
+    }
+
+    private async Task<ApiResponse> FindInAvailableShowMovie(int id)
+    {
+        var filter = await this._showMovieQuery.AvailableMovie(id);
+
+        return filter.Count != 0
+            ? new ApiResponse(HttpStatusCode.BadRequest, "There is a show movie available with this movie")
+            : new ApiResponse();
+    }
+
+    private async Task UpdateMovieProps(IEnumerable<int> actors, int director, int genre, int country)
+    {
+        foreach (var actor in actors)
+        {
+            await this._moviePropCommand.UpdateActors(actor);
+        }
+
+        await this._moviePropCommand.UpdateDirectors(director);
+        await this._moviePropCommand.UpdateGenres(genre);
+        await this._moviePropCommand.UpdateCountries(country);
+    }
+
+    private (IEnumerable<int>, int, int, int) LastMovieProp(Movie movie)
+    {
+        var actors = movie.Actors.Select(actor => actor.Id).ToList();
+        var (director, genre, country) = (movie.DirectorId, movie.GenreId, movie.CountryId);
+
+        return (actors, director, genre, country);
     }
 }

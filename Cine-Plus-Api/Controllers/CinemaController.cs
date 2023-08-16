@@ -41,16 +41,18 @@ public class CinemaController : ControllerBase
     {
         var response = await this._cinemaCommand.Handler(request);
 
-        if(response.Ok) return Ok();
-        
+        if (response.Ok) return Ok();
+
         return StatusCode((int)response.Status, new { message = response.Message });
     }
 
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Remove(int id)
     {
-        await this._cinemaCommand.Handler(id);
+        var response = await this._cinemaCommand.Handler(id);
 
-        return Ok();
+        if (response.Ok) return Ok();
+
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
 }

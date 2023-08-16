@@ -23,6 +23,8 @@ public class ApiResponse<T>
         this.Value = value;
         this.Status = HttpStatusCode.Accepted;
     }
+
+    public ApiResponse ConvertApiResponse() => new(this.Status, this.Message!);
 }
 
 public class ApiResponse

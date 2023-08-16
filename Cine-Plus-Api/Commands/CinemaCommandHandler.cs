@@ -4,6 +4,7 @@ using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Cine_Plus_Api.Responses;
 using System.Net;
+using Cine_Plus_Api.Models;
 
 namespace Cine_Plus_Api.Commands;
 
@@ -13,7 +14,7 @@ public interface ICinemaCommandHandler
 
     Task<ApiResponse> Handler(UpdateCinema request);
 
-    Task Handler(int id);
+    Task<ApiResponse> Handler(int id);
 }
 
 public class CinemaCommandHandler : ICinemaCommandHandler
@@ -22,10 +23,14 @@ public class CinemaCommandHandler : ICinemaCommandHandler
 
     private readonly ICinemaQueryHandler _cinemaQuery;
 
-    public CinemaCommandHandler(CinePlusContext context, ICinemaQueryHandler cinemaQuery)
+    private readonly IShowMovieQueryHandler _showMovieQuery;
+
+    public CinemaCommandHandler(CinePlusContext context, ICinemaQueryHandler cinemaQuery,
+        IShowMovieQueryHandler showMovieQuery)
     {
         this._context = context;
         this._cinemaQuery = cinemaQuery;
+        this._showMovieQuery = showMovieQuery;
     }
 
     public async Task<ApiResponse<int>> Handler(CreateCinema request)
@@ -45,12 +50,15 @@ public class CinemaCommandHandler : ICinemaCommandHandler
 
     public async Task<ApiResponse> Handler(UpdateCinema request)
     {
-        var cinema = request.Cinema();
+        var responseCinema = await Find(request.Id);
+        if (!responseCinema.Ok) return responseCinema.ConvertApiResponse();
 
         var cinemaEntry = await this._cinemaQuery.Handler(request.Name);
 
-        if (cinemaEntry is not null && cinemaEntry.Id != cinema.Id)
+        if (cinemaEntry is not null && cinemaEntry.Id != request.Id)
             return new ApiResponse(HttpStatusCode.BadRequest, "There is already a cinema with the same name");
+
+        var cinema = request.Cinema();
 
         this._context.Cinemas.Update(cinema);
         await this._context.SaveChangesAsync();
@@ -58,13 +66,37 @@ public class CinemaCommandHandler : ICinemaCommandHandler
         return new ApiResponse();
     }
 
-    public async Task Handler(int id)
+    public async Task<ApiResponse> Handler(int id)
     {
-        var cinema = await this._context.Cinemas.SingleOrDefaultAsync(cinema => cinema.Id == id);
+        var responseCinema = await Find(id);
+        if (!responseCinema.Ok) return responseCinema.ConvertApiResponse();
 
-        if (cinema is null) return;
+        var responseShowMovie = await FindInAvailableShowMovie(id);
+        if (!responseShowMovie.Ok) return responseShowMovie;
+
+        var cinema = responseCinema.Value!;
 
         this._context.Cinemas.Remove(cinema);
         await this._context.SaveChangesAsync();
+
+        return new ApiResponse();
+    }
+
+    private async Task<ApiResponse<Cinema>> Find(int id)
+    {
+        var cinema = await this._context.Cinemas.SingleOrDefaultAsync(cinema => cinema.Id == id);
+
+        return cinema is null
+            ? new ApiResponse<Cinema>(HttpStatusCode.NotFound, "Not found cinema")
+            : new ApiResponse<Cinema>(cinema);
+    }
+
+    private async Task<ApiResponse> FindInAvailableShowMovie(int id)
+    {
+        var filter = await this._showMovieQuery.AvailableCinema(id);
+
+        return filter.Count != 0
+            ? new ApiResponse(HttpStatusCode.BadRequest, "There is a show movie available with this cinema")
+            : new ApiResponse();
     }
 }

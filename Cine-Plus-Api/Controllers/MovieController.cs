@@ -49,8 +49,10 @@ public class MovieController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Remove(int id)
     {
-        await this._movieCommand.Handler(id);
+        var response = await this._movieCommand.Handler(id);
 
-        return Ok();
+        if (response.Ok) return Ok();
+
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
 }
