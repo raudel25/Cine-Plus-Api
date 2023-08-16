@@ -11,7 +11,7 @@ public interface IDiscountCommandHandler
 {
     Task<ApiResponse<int>> Handler(CreateDiscount request);
 
-    Task Handler(UpdateDiscount request);
+    Task<ApiResponse> Handler(UpdateDiscount request);
 
     Task Handler(int id);
 }
@@ -43,12 +43,19 @@ public class DiscountCommandHandler : IDiscountCommandHandler
         return new ApiResponse<int>(discount.Id);
     }
 
-    public async Task Handler(UpdateDiscount request)
+    public async Task<ApiResponse> Handler(UpdateDiscount request)
     {
         var discount = request.Discount();
 
+        var discountEntry = await this._discountQuery.Handler(request.Name);
+
+        if (discountEntry is not null && discountEntry.Id != discount.Id)
+            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a discount with the same name");
+
         this._context.Discounts.Update(discount);
         await this._context.SaveChangesAsync();
+
+        return new ApiResponse();
     }
 
     public async Task Handler(int id)

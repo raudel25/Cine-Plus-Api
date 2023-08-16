@@ -29,15 +29,21 @@ public class MovieController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<int>> Post(CreateMovie request)
     {
-        return await this._movieCommand.Handler(request);
+        var response = await this._movieCommand.Handler(request);
+
+        if (response.Ok) return response.Value;
+
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
-    
+
     [HttpPut]
     public async Task<ActionResult> Put(UpdateMovie request)
     {
-        await this._movieCommand.Handler(request);
-        
-        return Ok();
+        var response = await this._movieCommand.Handler(request);
+
+        if (response.Ok) return Ok();
+
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
 
     [HttpDelete("{id:int}")]

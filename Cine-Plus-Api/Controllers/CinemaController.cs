@@ -29,15 +29,21 @@ public class CinemaController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<int>> Post(CreateCinema request)
     {
-        return await this._cinemaCommand.Handler(request);
+        var response = await this._cinemaCommand.Handler(request);
+
+        if (response.Ok) return Ok();
+
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
-    
+
     [HttpPut]
     public async Task<ActionResult> Put(UpdateCinema request)
     {
-        await this._cinemaCommand.Handler(request);
+        var response = await this._cinemaCommand.Handler(request);
+
+        if(response.Ok) return Ok();
         
-        return Ok();
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
 
     [HttpDelete("{id:int}")]

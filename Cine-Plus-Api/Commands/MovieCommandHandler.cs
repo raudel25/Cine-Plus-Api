@@ -2,15 +2,17 @@ using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Services;
 using Cine_Plus_Api.Queries;
+using Cine_Plus_Api.Responses;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace Cine_Plus_Api.Commands;
 
 public interface IMovieCommandHandler
 {
-    Task<int> Handler(CreateMovie request);
+    Task<ApiResponse<int>> Handler(CreateMovie request);
 
-    Task Handler(UpdateMovie request);
+    Task<ApiResponse> Handler(UpdateMovie request);
 
     Task Handler(int id);
 }
@@ -23,12 +25,15 @@ public class MovieCommandHandler : IMovieCommandHandler
 
     private readonly IMoviePropCommandHandler _moviePropCommand;
 
+    private readonly IMovieQueryHandler _movieQuery;
+
     public MovieCommandHandler(CinePlusContext context, IMoviePropQueryHandler moviePropQuery,
-        IMoviePropCommandHandler moviePropCommand)
+        IMoviePropCommandHandler moviePropCommand, IMovieQueryHandler movieQuery)
     {
         this._context = context;
         this._moviePropQuery = moviePropQuery;
         this._moviePropCommand = moviePropCommand;
+        this._movieQuery = movieQuery;
     }
 
     private async Task CheckExisting(Movie movie)
@@ -75,21 +80,31 @@ public class MovieCommandHandler : IMovieCommandHandler
         return (actors, director, genre, country);
     }
 
-    public async Task<int> Handler(CreateMovie request)
+    public async Task<ApiResponse<int>> Handler(CreateMovie request)
     {
         var movie = request.Movie();
+
+        var movieEntry = await this._movieQuery.Handler(request.Name);
+
+        if (movieEntry is not null)
+            return new ApiResponse<int>(HttpStatusCode.BadRequest, "There is already a movie with the same name");
 
         await CheckExisting(movie);
 
         this._context.Add(movie);
         await this._context.SaveChangesAsync();
 
-        return movie.Id;
+        return new ApiResponse<int>(movie.Id);
     }
 
-    public async Task Handler(UpdateMovie request)
+    public async Task<ApiResponse> Handler(UpdateMovie request)
     {
         var movie = request.Movie();
+
+        var movieEntry = await this._movieQuery.Handler(request.Name);
+
+        if (movieEntry is not null && movieEntry.Id != movie.Id)
+            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a movie with the same name");
 
         await CheckExisting(movie);
 
@@ -99,6 +114,8 @@ public class MovieCommandHandler : IMovieCommandHandler
         await this._context.SaveChangesAsync();
 
         await UpdateMovieProps(actors, director, genre, country);
+
+        return new ApiResponse();
     }
 
     public async Task Handler(int id)

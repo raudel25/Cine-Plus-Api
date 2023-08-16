@@ -39,9 +39,11 @@ public class DiscountController : ControllerBase
     [HttpPut]
     public async Task<ActionResult> Put(UpdateDiscount request)
     {
-        await this._discountCommand.Handler(request);
+        var response = await this._discountCommand.Handler(request);
 
-        return Ok();
+        if (response.Ok) return Ok();
+        
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
 
     [HttpDelete("{id:int}")]

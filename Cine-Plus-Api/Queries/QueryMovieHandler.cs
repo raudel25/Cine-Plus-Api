@@ -7,6 +7,8 @@ namespace Cine_Plus_Api.Queries;
 public interface IMovieQueryHandler
 {
     Task<IEnumerable<Movie>> Handler();
+    Task<Movie?> Handler(string name);
+
 }
 
 public class MovieQueryHandler : IMovieQueryHandler
@@ -21,5 +23,10 @@ public class MovieQueryHandler : IMovieQueryHandler
     public async Task<IEnumerable<Movie>> Handler()
     {
         return await this._context.Movies.ToListAsync();
+    }
+    
+    public async Task<Movie?> Handler(string name)
+    {
+        return await this._context.Movies.SingleOrDefaultAsync(movie => movie.Name == name);
     }
 }

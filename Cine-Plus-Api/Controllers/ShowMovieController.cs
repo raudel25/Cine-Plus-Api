@@ -31,6 +31,8 @@ public class ShowMovieController : ControllerBase
     {
         var response = await this._showMovieCommand.Handler(request);
 
+        if (response.Ok) return response.Value;
+
         return StatusCode((int)response.Status, new { message = response.Message });
     }
 }
