@@ -1,10 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Queries;
 using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Responses;
 using Cine_Plus_Api.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cine_Plus_Api.Commands;
 
@@ -35,12 +35,10 @@ public class DiscountCommandHandler : IDiscountCommandHandler
 
     public async Task<ApiResponse<int>> Handler(CreateDiscount request)
     {
+        var responseSameName = await CheckSameName(request.Name);
+        if (!responseSameName.Ok) return responseSameName.ConvertApiResponse<int>();
+
         var discount = request.Discount();
-
-        var discountEntry = await this._discountQuery.Handler(request.Name);
-
-        if (discountEntry is not null)
-            return new ApiResponse<int>(HttpStatusCode.BadRequest, "There is already a discount with the same name");
 
         this._context.Discounts.Add(discount);
         await this._context.SaveChangesAsync();
@@ -53,10 +51,8 @@ public class DiscountCommandHandler : IDiscountCommandHandler
         var responseDiscount = await Find(request.Id);
         if (!responseDiscount.Ok) return responseDiscount.ConvertApiResponse();
 
-        var discountEntry = await this._discountQuery.Handler(request.Name);
-
-        if (discountEntry is not null && discountEntry.Id != request.Id)
-            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a discount with the same name");
+        var responseSameName = await CheckSameName(request.Name, request.Id);
+        if (!responseSameName.Ok) return responseSameName;
 
         var discount = request.Discount();
 
@@ -78,6 +74,16 @@ public class DiscountCommandHandler : IDiscountCommandHandler
 
         this._context.Discounts.Remove(discount);
         await this._context.SaveChangesAsync();
+
+        return new ApiResponse();
+    }
+    
+    private async Task<ApiResponse> CheckSameName(string name, int id = -1)
+    {
+        var discountEntry = await this._discountQuery.Handler(name);
+
+        if (discountEntry is not null && discountEntry.Id != id)
+            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a discount with the same name");
 
         return new ApiResponse();
     }

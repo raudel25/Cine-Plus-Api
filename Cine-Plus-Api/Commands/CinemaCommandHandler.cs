@@ -1,9 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using System.Net;
 using Cine_Plus_Api.Queries;
 using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Services;
-using Microsoft.EntityFrameworkCore;
 using Cine_Plus_Api.Responses;
-using System.Net;
 using Cine_Plus_Api.Models;
 
 namespace Cine_Plus_Api.Commands;
@@ -35,12 +35,10 @@ public class CinemaCommandHandler : ICinemaCommandHandler
 
     public async Task<ApiResponse<int>> Handler(CreateCinema request)
     {
+        var responseSameName = await CheckSameName(request.Name);
+        if (!responseSameName.Ok) return responseSameName.ConvertApiResponse<int>();
+        
         var cinema = request.Cinema();
-
-        var cinemaEntry = await this._cinemaQuery.Handler(request.Name);
-
-        if (cinemaEntry is not null)
-            return new ApiResponse<int>(HttpStatusCode.BadRequest, "There is already a cinema with the same name");
 
         this._context.Cinemas.Add(cinema);
         await this._context.SaveChangesAsync();
@@ -53,10 +51,8 @@ public class CinemaCommandHandler : ICinemaCommandHandler
         var responseCinema = await Find(request.Id);
         if (!responseCinema.Ok) return responseCinema.ConvertApiResponse();
 
-        var cinemaEntry = await this._cinemaQuery.Handler(request.Name);
-
-        if (cinemaEntry is not null && cinemaEntry.Id != request.Id)
-            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a cinema with the same name");
+        var responseSameName = await CheckSameName(request.Name, request.Id);
+        if (!responseSameName.Ok) return responseSameName;
 
         var cinema = request.Cinema();
 
@@ -78,6 +74,16 @@ public class CinemaCommandHandler : ICinemaCommandHandler
 
         this._context.Cinemas.Remove(cinema);
         await this._context.SaveChangesAsync();
+
+        return new ApiResponse();
+    }
+
+    private async Task<ApiResponse> CheckSameName(string name, int id = -1)
+    {
+        var cinemaEntry = await this._cinemaQuery.Handler(name);
+
+        if (cinemaEntry is not null && cinemaEntry.Id != id)
+            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a cinema with the same name");
 
         return new ApiResponse();
     }

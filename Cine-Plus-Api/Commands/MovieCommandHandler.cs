@@ -1,10 +1,10 @@
+using System.Net;
 using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Services;
 using Cine_Plus_Api.Queries;
 using Cine_Plus_Api.Responses;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
 
 namespace Cine_Plus_Api.Commands;
 
@@ -62,12 +62,10 @@ public class MovieCommandHandler : IMovieCommandHandler
 
     public async Task<ApiResponse<int>> Handler(CreateMovie request)
     {
+        var responseSameName = await CheckSameName(request.Name);
+        if (!responseSameName.Ok) return responseSameName.ConvertApiResponse<int>();
+
         var movie = request.Movie();
-
-        var movieEntry = await this._movieQuery.Handler(request.Name);
-
-        if (movieEntry is not null)
-            return new ApiResponse<int>(HttpStatusCode.BadRequest, "There is already a movie with the same name");
 
         await CheckExisting(movie);
 
@@ -82,10 +80,8 @@ public class MovieCommandHandler : IMovieCommandHandler
         var responseMovie = await Find(request.Id);
         if (!responseMovie.Ok) return responseMovie.ConvertApiResponse();
 
-        var movieEntry = await this._movieQuery.Handler(request.Name);
-
-        if (movieEntry is not null && movieEntry.Id != request.Id)
-            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a movie with the same name");
+        var responseSameName = await CheckSameName(request.Name, request.Id);
+        if (!responseSameName.Ok) return responseSameName;
 
         var (actors, director, genre, country) = LastMovieProp(responseMovie.Value!);
 
@@ -115,6 +111,16 @@ public class MovieCommandHandler : IMovieCommandHandler
         await this._context.SaveChangesAsync();
 
         await UpdateMovieProps(actors, director, genre, country);
+
+        return new ApiResponse();
+    }
+
+    private async Task<ApiResponse> CheckSameName(string name, int id = -1)
+    {
+        var movieEntry = await this._movieQuery.Handler(name);
+
+        if (movieEntry is not null && movieEntry.Id != id)
+            return new ApiResponse(HttpStatusCode.BadRequest, "There is already a movie with the same name");
 
         return new ApiResponse();
     }
