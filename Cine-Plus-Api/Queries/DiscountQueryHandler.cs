@@ -9,6 +9,8 @@ public interface IDiscountQueryHandler
     Task<IEnumerable<Discount>> Handler();
 
     Task<Discount?> Handler(int id);
+
+    Task<Discount?> Handler(string name);
 }
 
 public class DiscountQueryHandler : IDiscountQueryHandler
@@ -28,5 +30,10 @@ public class DiscountQueryHandler : IDiscountQueryHandler
     public async Task<Discount?> Handler(int id)
     {
         return await this._context.Discounts.SingleOrDefaultAsync(discount => discount.Id == id);
+    }
+    
+    public async Task<Discount?> Handler(string name)
+    {
+        return await this._context.Discounts.SingleOrDefaultAsync(discount => discount.Name == name);
     }
 }

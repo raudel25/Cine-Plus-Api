@@ -1,4 +1,6 @@
+using System.Net;
 using Cine_Plus_Api.Models;
+using Cine_Plus_Api.Responses;
 using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +10,7 @@ public interface IShowMovieQueryHandler
 {
     Task<IEnumerable<ShowMovie>> Handler();
 
-    Task<bool> Handler(ShowMovie showMovie);
+    Task<ApiResponse> Handler(ShowMovie showMovie);
 }
 
 public class ShowMovieQueryHandler : IShowMovieQueryHandler
@@ -26,19 +28,22 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
     }
 
 
-    public async Task<bool> Handler(ShowMovie showMovie)
+    public async Task<ApiResponse> Handler(ShowMovie showMovie)
     {
         var movie = await this._context.Movies.SingleOrDefaultAsync(movie => movie.Id == showMovie.MovieId);
         var cinema = await this._context.Cinemas.SingleOrDefaultAsync(cinema => cinema.Id == showMovie.CinemaId);
 
-        if (movie is null || cinema is null) return false;
+        if (movie is null || cinema is null)
+            return new ApiResponse(HttpStatusCode.BadRequest, "The movie or cinema does not exist");
 
         var (start, end) = (showMovie.Date, showMovie.Date + movie.Duration);
 
         var showMovies = await this._context.ShowMovies.Where(sm => sm.CinemaId == showMovie.Id).ToListAsync();
         showMovies = showMovies.Where(sm => Conflict(start, end, sm.Date, sm.Date + sm.Movie.Duration)).ToList();
 
-        return showMovies.Count == 0;
+        return showMovies.Count == 0
+            ? new ApiResponse()
+            : new ApiResponse(HttpStatusCode.BadRequest, "The show movie conflicts the others");
     }
 
     private bool Conflict(long start, long end, long startMovie, long endMovie)

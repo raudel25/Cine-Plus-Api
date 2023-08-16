@@ -10,6 +10,8 @@ public class ApiResponse<T>
 
     public T? Value { get; set; }
 
+    public bool Ok => HttpStatusCode.Accepted == Status;
+
     public ApiResponse(HttpStatusCode status, string message)
     {
         this.Message = message;
@@ -29,6 +31,8 @@ public class ApiResponse
 
     public string? Message { get; private set; }
 
+    public bool Ok => HttpStatusCode.Accepted == Status;
+
     public ApiResponse(HttpStatusCode status, string message)
     {
         this.Message = message;
@@ -40,5 +44,5 @@ public class ApiResponse
         this.Status = HttpStatusCode.Accepted;
     }
 
-    public ApiResponse<T> ConvertApiResponse<T>(HttpStatusCode status, string message) => new(status, message);
+    public ApiResponse<T> ConvertApiResponse<T>() => new(this.Status, this.Message!);
 }

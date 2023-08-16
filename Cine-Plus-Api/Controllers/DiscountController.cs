@@ -29,14 +29,18 @@ public class DiscountController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<int>> Post(CreateDiscount request)
     {
-        return await this._discountCommand.Handler(request);
+        var response = await this._discountCommand.Handler(request);
+
+        if (response.Ok) return response.Value;
+
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
-    
+
     [HttpPut]
     public async Task<ActionResult> Put(UpdateDiscount request)
     {
         await this._discountCommand.Handler(request);
-        
+
         return Ok();
     }
 

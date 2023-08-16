@@ -2,12 +2,13 @@ using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Services;
 using Cine_Plus_Api.Queries;
+using Cine_Plus_Api.Responses;
 
 namespace Cine_Plus_Api.Commands;
 
 public interface IShowMovieCommandHandler
 {
-    Task<int> Handler(CreateShowMovie request);
+    Task<ApiResponse<int>> Handler(CreateShowMovie request);
 }
 
 public class ShowMovieCommandHandler : IShowMovieCommandHandler
@@ -45,20 +46,20 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
         showMovie.Discounts = discountEntries;
     }
 
-    public async Task<int> Handler(CreateShowMovie request)
+    public async Task<ApiResponse<int>> Handler(CreateShowMovie request)
     {
         var showMovie = request.ShowMovie();
 
         var possible = await this._showMovieQuery.Handler(showMovie);
 
-        //TODO: Check possible
+        if (!possible.Ok) return possible.ConvertApiResponse<int>();
 
         this._context.ShowMovies.Add(showMovie);
         await this._context.SaveChangesAsync();
 
         // await CreateAvailableSeats(showMovie);
 
-        return showMovie.Id;
+        return new ApiResponse<int>(showMovie.Id);
     }
 
     private async Task CreateAvailableSeats(ShowMovie showMovie)

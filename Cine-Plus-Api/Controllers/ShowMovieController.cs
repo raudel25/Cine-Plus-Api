@@ -29,6 +29,8 @@ public class ShowMovieController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<int>> Post(CreateShowMovie request)
     {
-        return await this._showMovieCommand.Handler(request);
+        var response = await this._showMovieCommand.Handler(request);
+
+        return StatusCode((int)response.Status, new { message = response.Message });
     }
 }
