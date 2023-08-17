@@ -8,9 +8,9 @@ public class AuthResponse
 
     public string Token { get; set; }
 
-    public string AccountType { get; set; }
+    public Helpers.AccountType AccountType { get; set; }
 
-    public AuthResponse(int id, string token, string accountType)
+    public AuthResponse(int id, string token, Helpers.AccountType accountType)
     {
         this.Id = id;
         this.Token = token;
