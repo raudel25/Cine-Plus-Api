@@ -10,7 +10,7 @@ public class CinePlusContext : DbContext
     public DbSet<Director> Directors { get; set; } = null!;
 
     public DbSet<Genre> Genres { get; set; } = null!;
-    
+
     public DbSet<Country> Countries { get; set; } = null!;
 
     public DbSet<Movie> Movies { get; set; } = null!;
@@ -22,6 +22,8 @@ public class CinePlusContext : DbContext
     public DbSet<Discount> Discounts { get; set; } = null!;
 
     public DbSet<ShowMovie> ShowMovies { get; set; } = null!;
+
+    public DbSet<User> Users { get; set; } = null!;
 
     public CinePlusContext(DbContextOptions<CinePlusContext> options) : base(options)
     {
