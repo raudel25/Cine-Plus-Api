@@ -69,22 +69,27 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
 
     public async Task<ICollection<ShowMovie>> AvailableMovie(int id)
     {
-        return await this._context.ShowMovies
-            .Where(showMovie => AvailableShowMovie(showMovie) && showMovie.MovieId == id)
+        var result = await this._context.ShowMovies
+            .Where(showMovie => showMovie.MovieId == id)
             .ToListAsync();
+
+        return result.Where(AvailableShowMovie).ToList();
     }
 
     public async Task<ICollection<ShowMovie>> AvailableDiscount(int id)
     {
-        var discount = await this._context.Discounts.SingleOrDefaultAsync(discount => discount.Id == id);
+        var discount = await this._context.Discounts.Include(discount => discount.ShowMovies)
+            .SingleOrDefaultAsync(discount => discount.Id == id);
 
         return discount is null ? new List<ShowMovie>() : discount.ShowMovies.Where(AvailableShowMovie).ToList();
     }
 
     public async Task<ICollection<ShowMovie>> AvailableCinema(int id)
     {
-        return await this._context.ShowMovies
-            .Where(showMovie => AvailableShowMovie(showMovie) && showMovie.CinemaId == id)
+        var result = await this._context.ShowMovies
+            .Where(showMovie => showMovie.CinemaId == id)
             .ToListAsync();
+
+        return result.Where(AvailableShowMovie).ToList();
     }
 }
