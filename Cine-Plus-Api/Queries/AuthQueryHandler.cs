@@ -44,11 +44,13 @@ public class AuthQueryHandler : IAuthQueryHandler
 
     public async Task<int> MaxEmploy()
     {
+        if (!await _context.Employs.AnyAsync()) return 0;
         return await this._context.Employs.Select(employ => employ.Id).MaxAsync();
     }
 
     public async Task<int> MaxManager()
     {
+        if (!await _context.Managers.AnyAsync()) return 0;
         return await this._context.Managers.Select(manager => manager.Id).MaxAsync();
     }
 

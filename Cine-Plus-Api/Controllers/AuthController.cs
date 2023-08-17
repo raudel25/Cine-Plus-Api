@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
     {
         var user = await this._authQuery.User(request.Email);
 
-        if (user is null || !Password.CheckPassword(request.Password, user.Password))
+        if (user is null || !Password.CheckPassword( user.Password,request.Password))
             return BadRequest(new { message = "Incorrect email or password" });
 
         var token = this._securityService.Jwt(user.Id, user.Name, AccountType.User);

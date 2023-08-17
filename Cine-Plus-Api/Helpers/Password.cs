@@ -22,7 +22,7 @@ public static class Password
         return Convert.ToBase64String(hashBytes);
     }
 
-    public static bool CheckPassword(string password,string confirm)
+    public static bool CheckPassword(string password,string current)
     {
         var hashBytes = Convert.FromBase64String(password);
 
@@ -31,7 +31,7 @@ public static class Password
         var hash = new byte[20];
         Array.Copy(hashBytes, 16, hash, 0, 20);
 
-        var pbkdf2 = new Rfc2898DeriveBytes(confirm, sal, 10000, HashAlgorithmName.SHA256);
+        var pbkdf2 = new Rfc2898DeriveBytes(current, sal, 10000, HashAlgorithmName.SHA256);
         var hashPass = pbkdf2.GetBytes(20);
 
         for (var i = 0; i < 20; i++)

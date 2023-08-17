@@ -73,7 +73,7 @@ public class AuthCommandHandler : IAuthCommandHandler
 
     public async Task<CreateEmployResponse> Employ()
     {
-        var number = await this._authQuery.MaxEmploy();
+        var number = await this._authQuery.MaxEmploy() + 1;
         var password = Password.RandomPassword();
         var user = $"employ{number}";
 
@@ -87,7 +87,7 @@ public class AuthCommandHandler : IAuthCommandHandler
 
     public async Task<CreateManagerResponse> Manager()
     {
-        var number = await this._authQuery.MaxManager();
+        var number = await this._authQuery.MaxManager() + 1;
         var password = Password.RandomPassword();
         var user = $"manager{number}";
 
