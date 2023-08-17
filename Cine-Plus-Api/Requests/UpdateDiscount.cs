@@ -6,6 +6,5 @@ public class UpdateDiscount : CreateDiscount
 {
     public int Id { get; set; }
 
-    public new Discount Discount() => new Discount
-        { Id = this.Id, Name = this.Name, Description = this.Description, DiscountPercent = this.DiscountPercent };
+    public new Discount Discount() => new() { Id = this.Id, Name = this.Name, Description = this.Description, DiscountPercent = this.DiscountPercent };
 }

@@ -36,6 +36,7 @@ builder.Services.AddScoped<IAvailableSeatsCommandHandler, AvailableSeatsCommandH
 builder.Services.AddScoped<IAvailableSeatQueryHandler, AvailableSeatQueryHandler>();
 builder.Services.AddScoped<IAuthCommandHandler, AuthCommandHandler>();
 builder.Services.AddScoped<IAuthQueryHandler, AuthQueryHandler>();
+builder.Services.AddScoped<SecurityService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

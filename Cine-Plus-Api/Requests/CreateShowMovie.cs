@@ -16,7 +16,7 @@ public class CreateShowMovie
     public ICollection<int> Discounts { get; set; } = null!;
 
     public ShowMovie ShowMovie() =>
-        new ShowMovie
+        new()
         {
             Date = this.Date, MovieId = this.MovieId, CinemaId = this.CinemaId
         };

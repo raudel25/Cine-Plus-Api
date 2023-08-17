@@ -10,6 +10,5 @@ public class CreateDiscount
 
     public double DiscountPercent { get; set; }
 
-    public Discount Discount() => new Discount
-        { Name = this.Name, Description = this.Description, DiscountPercent = this.DiscountPercent };
+    public Discount Discount() => new() { Name = this.Name, Description = this.Description, DiscountPercent = this.DiscountPercent };
 }

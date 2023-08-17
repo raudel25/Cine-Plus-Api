@@ -8,5 +8,5 @@ public class CreateCinema
 
     public int CantSeats { get; set; }
 
-    public Cinema Cinema() => new Cinema { Name = this.Name, CantSeats = this.CantSeats };
+    public Cinema Cinema() => new() { Name = this.Name, CantSeats = this.CantSeats };
 }

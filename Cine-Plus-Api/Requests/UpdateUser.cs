@@ -11,6 +11,5 @@ public class UpdateUser
     public string Password { get; set; } = null!;
 
 
-    public User User(string email) => new User
-        { Id = this.Id, Name = this.Name, Email = email, Password = this.Password };
+    public User User(string email) => new() { Id = this.Id, Name = this.Name, Email = email, Password = this.Password };
 }

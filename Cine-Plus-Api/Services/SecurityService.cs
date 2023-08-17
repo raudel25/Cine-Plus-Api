@@ -8,11 +8,11 @@ using Cine_Plus_Api.Responses;
 
 namespace Cine_Plus_Api.Services;
 
-public class Token
+public class SecurityService
 {
     private readonly IConfiguration _configuration;
 
-    public Token(IConfiguration configuration)
+    public SecurityService(IConfiguration configuration)
     {
         this._configuration = configuration;
     }
@@ -64,7 +64,7 @@ public class Token
             return new ApiResponse<(int, AccountType)>((int.Parse(idClaim.Value),
                 AccountTypeMethods.ToAccountType(roleClaim.Value)));
         }
-        catch (Exception _)
+        catch 
         {
             return new ApiResponse<(int, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
         }
