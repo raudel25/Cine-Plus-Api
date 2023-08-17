@@ -26,7 +26,7 @@ public class AuthController : ControllerBase
         this._authQuery = authQuery;
     }
 
-    [HttpPost]
+    [HttpPost("user")]
     public async Task<ActionResult<AuthResponse>> CreateUser(CreateUser request)
     {
         request.Password = Password.EncryptPassword(request.Password);
@@ -39,12 +39,12 @@ public class AuthController : ControllerBase
         return new AuthResponse(response.Value, token, AccountType.User);
     }
 
-    [HttpPost]
+    [HttpPost("user")]
     public async Task<ActionResult<AuthResponse>> LoginUser(LoginUser request)
     {
         var user = await this._authQuery.User(request.Email);
 
-        if (user is null || Password.CheckPassword(request.Password, user.Password))
+        if (user is null || !Password.CheckPassword(request.Password, user.Password))
             return BadRequest(new { message = "Incorrect email or password" });
 
         var token = this._token.Jwt(user.Id, AccountType.User);
@@ -52,8 +52,34 @@ public class AuthController : ControllerBase
         return new AuthResponse(user.Id, token, AccountType.User);
     }
 
+    [HttpPost("employ")]
+    public async Task<ActionResult<AuthResponse>> LoginEmploy(LoginEmploy request)
+    {
+        var employ = await this._authQuery.Employ(request.User);
+
+        if (employ is null || employ.Password != request.Password)
+            return BadRequest(new { message = "Incorrect email or password" });
+
+        var token = this._token.Jwt(employ.Id, AccountType.Employ);
+
+        return new AuthResponse(employ.Id, token, AccountType.Employ);
+    }
+
+    [HttpPost("manager")]
+    public async Task<ActionResult<AuthResponse>> LoginManager(LoginManager request)
+    {
+        var manager = await this._authQuery.Manager(request.User);
+
+        if (manager is null || manager.Password != request.Password)
+            return BadRequest(new { message = "Incorrect email or password" });
+
+        var token = this._token.Jwt(manager.Id, AccountType.Manager);
+
+        return new AuthResponse(manager.Id, token, AccountType.Manager);
+    }
+
     [HttpPost("employ"), Authorize]
-    public async Task<ActionResult<CreateEmployResponse>> PostEmploy([FromHeader] string authorization)
+    public async Task<ActionResult<CreateEmployResponse>> CreateEmploy([FromHeader] string authorization)
     {
         var response = this._token.TokenToIdAccountType(authorization);
         if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
@@ -66,7 +92,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("manager"), Authorize]
-    public async Task<ActionResult<CreateManagerResponse>> PostManager([FromHeader] string authorization)
+    public async Task<ActionResult<CreateManagerResponse>> CreateManager([FromHeader] string authorization)
     {
         var response = this._token.TokenToIdAccountType(authorization);
         if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
@@ -78,22 +104,34 @@ public class AuthController : ControllerBase
         return await this._authCommand.Manager();
     }
 
-    [HttpDelete("employ/{id:int}")]
-    public async Task<IActionResult> DeleteEmploy(int id)
+    [HttpDelete("employ/{id:int}"),Authorize]
+    public async Task<IActionResult> DeleteEmploy(int id,[FromHeader] string authorization)
     {
-        var response = await this._authCommand.Employ(id);
+        var response = this._token.TokenToIdAccountType(authorization);
+        if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
 
-        if (response.Ok) return Ok();
+        var accountType = response.Value.Item2;
+        if (!AccountTypeMethods.Authorice(accountType, AccountType.Manager))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        var responseEmploy = await this._authCommand.Employ(id);
+        if (responseEmploy.Ok) return Ok();
 
         return StatusCode((int)response.Status, new { message = response.Message });
     }
 
     [HttpDelete("manager/{id:int}")]
-    public async Task<IActionResult> DeleteManager(int id)
+    public async Task<IActionResult> DeleteManager(int id,[FromHeader] string authorization)
     {
-        var response = await this._authCommand.Manager(id);
+        var response = this._token.TokenToIdAccountType(authorization);
+        if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
 
-        if (response.Ok) return Ok();
+        var accountType = response.Value.Item2;
+        if (!AccountTypeMethods.Authorice(accountType, AccountType.Admin))
+            return Unauthorized(new { message = "Unauthorized" });
+        
+        var responseManager = await this._authCommand.Manager(id);
+        if (responseManager.Ok) return Ok();
 
         return StatusCode((int)response.Status, new { message = response.Message });
     }

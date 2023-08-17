@@ -17,6 +17,10 @@ public interface IAuthQueryHandler
     Task<Employ?> Employ(int id);
 
     Task<Manager?> Manager(int id);
+
+    Task<Employ?> Employ(string user);
+
+    Task<Manager?> Manager(string user);
 }
 
 public class AuthQueryHandler : IAuthQueryHandler
@@ -56,5 +60,15 @@ public class AuthQueryHandler : IAuthQueryHandler
     public async Task<Manager?> Manager(int id)
     {
         return await this._context.Managers.SingleOrDefaultAsync(manager => manager.Id == id);
+    }
+
+    public async Task<Employ?> Employ(string user)
+    {
+        return await this._context.Employs.SingleOrDefaultAsync(employ => employ.Name == user);
+    }
+
+    public async Task<Manager?> Manager(string user)
+    {
+        return await this._context.Managers.SingleOrDefaultAsync(manager => manager.Name == user);
     }
 }
