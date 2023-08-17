@@ -17,7 +17,7 @@ public class SecurityService
         this._configuration = configuration;
     }
 
-    public string Jwt(int id, AccountType accountType)
+    public string Jwt(int id, string name, AccountType accountType)
     {
         var issuer = _configuration["Jwt:Issuer"];
         var audience = _configuration["Jwt:Audience"];
@@ -27,6 +27,7 @@ public class SecurityService
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, id.ToString()),
+                new Claim(ClaimTypes.Name,name),
                 new Claim(ClaimTypes.Role, AccountTypeMethods.ToString(accountType))
             }),
             Expires = DateTime.UtcNow.AddHours(2),
@@ -42,10 +43,10 @@ public class SecurityService
         return jwtToken;
     }
 
-    public ApiResponse<(int, AccountType)> TokenToIdAccountType(string authHeader)
+    public ApiResponse<(int, string, AccountType)> TokenToIdAccountType(string authHeader)
     {
         if (!authHeader.StartsWith("Bearer "))
-            return new ApiResponse<(int, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
+            return new ApiResponse<(int, string,AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
         var token = authHeader.Substring("Bearer ".Length).Trim();
 
@@ -53,20 +54,28 @@ public class SecurityService
         var jwtToken = handler.ReadJwtToken(token);
 
         var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "nameid");
-        //TODO:Verificar tipo
-        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "unique_name");
-
-        if (idClaim is null || roleClaim is null)
-            return new ApiResponse<(int, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
+        var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "unique_name");
+        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
+        
+        if (idClaim is null || nameClaim is null || roleClaim is null)
+            return new ApiResponse<(int, string, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
         try
         {
-            return new ApiResponse<(int, AccountType)>((int.Parse(idClaim.Value),
+            return new ApiResponse<(int, string, AccountType)>((int.Parse(idClaim.Value), roleClaim.Value,
                 AccountTypeMethods.ToAccountType(roleClaim.Value)));
         }
-        catch 
+        catch
         {
-            return new ApiResponse<(int, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
+            return new ApiResponse<(int, string, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
         }
+    }
+
+    public bool AdminCredentials(string user, string password)
+    {
+        var userSystem = _configuration["Admin:User"];
+        var passwordSystem = _configuration["Admin:Password"];
+
+        return user == userSystem && password == passwordSystem;
     }
 }

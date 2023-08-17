@@ -6,12 +6,15 @@ public class AuthResponse
 
     public string Token { get; set; }
 
-    public Helpers.AccountType AccountType { get; set; }
+    public string User { get; set; }
 
-    public AuthResponse(int id, string token, Helpers.AccountType accountType)
+    public string AccountType { get; set; }
+
+    public AuthResponse(int id, string user, string token, Helpers.AccountType accountType)
     {
         this.Id = id;
         this.Token = token;
-        this.AccountType = accountType;
+        this.AccountType = Helpers.AccountTypeMethods.ToString(accountType);
+        this.User = user;
     }
 }
