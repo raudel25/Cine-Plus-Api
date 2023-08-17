@@ -25,7 +25,20 @@ public class CinePlusContext : DbContext
 
     public DbSet<User> Users { get; set; } = null!;
 
+    public DbSet<Employ> Employs { get; set; } = null!;
+
+    public DbSet<Manager> Managers { get; set; } = null!;
+
     public CinePlusContext(DbContextOptions<CinePlusContext> options) : base(options)
     {
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Employ>()
+            .ToTable("Employs")
+            .HasDiscriminator<int>("TypeEmploy")
+            .HasValue<Employ>(0)
+            .HasValue<Manager>(1);
     }
 }

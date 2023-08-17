@@ -12,6 +12,14 @@ public interface IAuthCommandHandler
     Task<ApiResponse<int>> User(CreateUser request);
 
     Task<ApiResponse> User(UpdateUser request);
+
+    Task<ApiResponse<int>> Employ(CreateEmploy request);
+
+    Task<ApiResponse<int>> Manager(CreateManager request);
+
+    Task<ApiResponse> Employ(int id);
+
+    Task<ApiResponse> Manager(int id);
 }
 
 public class AuthCommandHandler : IAuthCommandHandler
@@ -44,7 +52,7 @@ public class AuthCommandHandler : IAuthCommandHandler
 
     public async Task<ApiResponse> User(UpdateUser request)
     {
-        var responseUser = await Find(request.Id);
+        var responseUser = await FindUser(request.Id);
         if (!responseUser.Ok) return responseUser.ConvertApiResponse();
 
         var user = responseUser.Value!;
@@ -61,13 +69,90 @@ public class AuthCommandHandler : IAuthCommandHandler
         return new ApiResponse();
     }
 
-    private async Task<ApiResponse<User>> Find(int id)
+
+    public async Task<ApiResponse<int>> Employ(CreateEmploy request)
+    {
+        var responseSameName = await CheckSameName(request.Name);
+        if (!responseSameName.Ok) return responseSameName.ConvertApiResponse<int>();
+
+        var employ = request.Employ();
+
+        var responseValid = ValidEmploy(employ);
+        if (!responseValid.Ok) return responseValid.ConvertApiResponse<int>();
+
+        this._context.Employs.Add(employ);
+        await this._context.SaveChangesAsync();
+
+        return new ApiResponse<int>(employ.Id);
+    }
+
+    public async Task<ApiResponse<int>> Manager(CreateManager request)
+    {
+        var responseSameName = await CheckSameName(request.Name);
+        if (!responseSameName.Ok) return responseSameName.ConvertApiResponse<int>();
+
+        var manager = request.Manager();
+
+        var responseValid = ValidEmploy(manager);
+        if (!responseValid.Ok) return responseValid.ConvertApiResponse<int>();
+
+        this._context.Managers.Add(manager);
+        await this._context.SaveChangesAsync();
+
+        return new ApiResponse<int>(manager.Id);
+    }
+
+    public async Task<ApiResponse> Employ(int id)
+    {
+        var responseEmploy = await FindEmploy(id);
+        if (!responseEmploy.Ok) return responseEmploy.ConvertApiResponse();
+
+        var employ = responseEmploy.Value!;
+
+        this._context.Employs.Remove(employ);
+        await this._context.SaveChangesAsync();
+
+        return new ApiResponse();
+    }
+
+    public async Task<ApiResponse> Manager(int id)
+    {
+        var responseManager = await FindManager(id);
+        if (!responseManager.Ok) return responseManager.ConvertApiResponse();
+
+        var manager = responseManager.Value!;
+
+        this._context.Managers.Remove(manager);
+        await this._context.SaveChangesAsync();
+
+        return new ApiResponse();
+    }
+    
+    private async Task<ApiResponse<User>> FindUser(int id)
     {
         var user = await this._authQuery.User(id);
 
         return user is null
             ? new ApiResponse<User>(HttpStatusCode.NotFound, "Not found user")
             : new ApiResponse<User>(user);
+    }
+
+    private async Task<ApiResponse<Employ>> FindEmploy(int id)
+    {
+        var employ = await this._authQuery.Employ(id);
+
+        return employ is null
+            ? new ApiResponse<Employ>(HttpStatusCode.NotFound, "Not found user")
+            : new ApiResponse<Employ>(employ);
+    }
+
+    private async Task<ApiResponse<Manager>> FindManager(int id)
+    {
+        var manager = await this._authQuery.Manager(id);
+
+        return manager is null
+            ? new ApiResponse<Manager>(HttpStatusCode.NotFound, "Not found user")
+            : new ApiResponse<Manager>(manager);
     }
 
     private ApiResponse ValidUser(User user)
@@ -80,6 +165,15 @@ public class AuthCommandHandler : IAuthCommandHandler
         return new ApiResponse();
     }
 
+    private ApiResponse ValidEmploy(Employ employ)
+    {
+        if (string.IsNullOrEmpty(employ.Name)) return new ApiResponse(HttpStatusCode.BadRequest, "Name is required");
+        if (string.IsNullOrEmpty(employ.Password) || employ.Password.Length < 5)
+            return new ApiResponse(HttpStatusCode.BadRequest, "Password is required or invalid");
+
+        return new ApiResponse();
+    }
+
     private async Task<ApiResponse> CheckSameEmail(string email)
     {
         var response = await this._authQuery.User(email);
@@ -87,5 +181,14 @@ public class AuthCommandHandler : IAuthCommandHandler
         return response is null
             ? new ApiResponse()
             : new ApiResponse(HttpStatusCode.BadRequest, "There is already a user with the same email");
+    }
+
+    private async Task<ApiResponse> CheckSameName(string name)
+    {
+        var response = await this._authQuery.Employ(name);
+
+        return response is null
+            ? new ApiResponse()
+            : new ApiResponse(HttpStatusCode.BadRequest, "There is already a employ with the same email");
     }
 }
