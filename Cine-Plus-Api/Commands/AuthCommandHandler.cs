@@ -1,4 +1,5 @@
 using System.Net;
+using Cine_Plus_Api.Helpers;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Queries;
 using Cine_Plus_Api.Requests;
@@ -13,9 +14,9 @@ public interface IAuthCommandHandler
 
     Task<ApiResponse> User(UpdateUser request);
 
-    Task<ApiResponse<int>> Employ(CreateEmploy request);
+    Task<CreateEmployResponse> Employ();
 
-    Task<ApiResponse<int>> Manager(CreateManager request);
+    Task<CreateManagerResponse> Manager();
 
     Task<ApiResponse> Employ(int id);
 
@@ -70,36 +71,32 @@ public class AuthCommandHandler : IAuthCommandHandler
     }
 
 
-    public async Task<ApiResponse<int>> Employ(CreateEmploy request)
+    public async Task<CreateEmployResponse> Employ()
     {
-        var responseSameName = await CheckSameName(request.Name);
-        if (!responseSameName.Ok) return responseSameName.ConvertApiResponse<int>();
+        var number = await this._authQuery.MaxEmploy();
+        var password = Password.RandomPassword();
+        var user = $"employ{number}";
 
-        var employ = request.Employ();
-
-        var responseValid = ValidEmploy(employ);
-        if (!responseValid.Ok) return responseValid.ConvertApiResponse<int>();
+        var employ = new Employ { Name = user, Password = password };
 
         this._context.Employs.Add(employ);
         await this._context.SaveChangesAsync();
 
-        return new ApiResponse<int>(employ.Id);
+        return new CreateEmployResponse { User = user, Password = password };
     }
 
-    public async Task<ApiResponse<int>> Manager(CreateManager request)
+    public async Task<CreateManagerResponse> Manager()
     {
-        var responseSameName = await CheckSameName(request.Name);
-        if (!responseSameName.Ok) return responseSameName.ConvertApiResponse<int>();
+        var number = await this._authQuery.MaxManager();
+        var password = Password.RandomPassword();
+        var user = $"manager{number}";
 
-        var manager = request.Manager();
-
-        var responseValid = ValidEmploy(manager);
-        if (!responseValid.Ok) return responseValid.ConvertApiResponse<int>();
+        var manager = new Manager { Name = user, Password = password };
 
         this._context.Managers.Add(manager);
         await this._context.SaveChangesAsync();
 
-        return new ApiResponse<int>(manager.Id);
+        return new CreateManagerResponse { User = user, Password = password };
     }
 
     public async Task<ApiResponse> Employ(int id)
@@ -127,7 +124,7 @@ public class AuthCommandHandler : IAuthCommandHandler
 
         return new ApiResponse();
     }
-    
+
     private async Task<ApiResponse<User>> FindUser(int id)
     {
         var user = await this._authQuery.User(id);
@@ -165,15 +162,6 @@ public class AuthCommandHandler : IAuthCommandHandler
         return new ApiResponse();
     }
 
-    private ApiResponse ValidEmploy(Employ employ)
-    {
-        if (string.IsNullOrEmpty(employ.Name)) return new ApiResponse(HttpStatusCode.BadRequest, "Name is required");
-        if (string.IsNullOrEmpty(employ.Password) || employ.Password.Length < 5)
-            return new ApiResponse(HttpStatusCode.BadRequest, "Password is required or invalid");
-
-        return new ApiResponse();
-    }
-
     private async Task<ApiResponse> CheckSameEmail(string email)
     {
         var response = await this._authQuery.User(email);
@@ -181,14 +169,5 @@ public class AuthCommandHandler : IAuthCommandHandler
         return response is null
             ? new ApiResponse()
             : new ApiResponse(HttpStatusCode.BadRequest, "There is already a user with the same email");
-    }
-
-    private async Task<ApiResponse> CheckSameName(string name)
-    {
-        var response = await this._authQuery.Employ(name);
-
-        return response is null
-            ? new ApiResponse()
-            : new ApiResponse(HttpStatusCode.BadRequest, "There is already a employ with the same email");
     }
 }

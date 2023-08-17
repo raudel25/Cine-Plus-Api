@@ -10,7 +10,9 @@ public interface IAuthQueryHandler
 
     Task<User?> User(int id);
 
-    Task<Employ?> Employ(string name);
+    Task<int> MaxEmploy();
+
+    Task<int> MaxManager();
 
     Task<Employ?> Employ(int id);
 
@@ -36,9 +38,14 @@ public class AuthQueryHandler : IAuthQueryHandler
         return await this._context.Users.SingleOrDefaultAsync(user => user.Id == id);
     }
 
-    public async Task<Employ?> Employ(string name)
+    public async Task<int> MaxEmploy()
     {
-        return await this._context.Employs.SingleOrDefaultAsync(employ => employ.Name == name);
+        return await this._context.Employs.Select(employ => employ.Id).MaxAsync();
+    }
+
+    public async Task<int> MaxManager()
+    {
+        return await this._context.Managers.Select(manager => manager.Id).MaxAsync();
     }
 
     public async Task<Employ?> Employ(int id)

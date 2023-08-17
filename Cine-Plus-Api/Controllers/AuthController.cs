@@ -52,16 +52,49 @@ public class AuthController : ControllerBase
         return new AuthResponse(user.Id, token, AccountType.User);
     }
 
-    // [HttpPost("employ"), Authorize]
-    // public async Task<ActionResult<AuthResponse>> CreateEmploy([FromHeader] string authorization)
-    // {
-    //     var response = this._token.TokenToIdAccountType(authorization);
-    //     if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
-    //
-    //     var accountType = response.Value.Item2;
-    //     if (!AccountTypeMethods.Authorice(accountType, AccountType.Manager))
-    //         return Unauthorized(new { message = "Unauthorized" });
-    //     
-    //     
-    // }
+    [HttpPost("employ"), Authorize]
+    public async Task<ActionResult<CreateEmployResponse>> PostEmploy([FromHeader] string authorization)
+    {
+        var response = this._token.TokenToIdAccountType(authorization);
+        if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
+
+        var accountType = response.Value.Item2;
+        if (!AccountTypeMethods.Authorice(accountType, AccountType.Manager))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        return await this._authCommand.Employ();
+    }
+
+    [HttpPost("manager"), Authorize]
+    public async Task<ActionResult<CreateManagerResponse>> PostManager([FromHeader] string authorization)
+    {
+        var response = this._token.TokenToIdAccountType(authorization);
+        if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
+
+        var accountType = response.Value.Item2;
+        if (!AccountTypeMethods.Authorice(accountType, AccountType.Admin))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        return await this._authCommand.Manager();
+    }
+
+    [HttpDelete("employ/{id:int}")]
+    public async Task<IActionResult> DeleteEmploy(int id)
+    {
+        var response = await this._authCommand.Employ(id);
+
+        if (response.Ok) return Ok();
+
+        return StatusCode((int)response.Status, new { message = response.Message });
+    }
+
+    [HttpDelete("manager/{id:int}")]
+    public async Task<IActionResult> DeleteManager(int id)
+    {
+        var response = await this._authCommand.Manager(id);
+
+        if (response.Ok) return Ok();
+
+        return StatusCode((int)response.Status, new { message = response.Message });
+    }
 }

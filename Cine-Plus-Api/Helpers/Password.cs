@@ -45,7 +45,7 @@ public static class Password
         return true;
     }
     
-    public static string RandomString()
+    public static string RandomPassword()
     {
         var alphabet = new List<string>(26 * 2 + 10);
 
