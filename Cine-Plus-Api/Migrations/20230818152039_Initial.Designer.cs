@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cine_Plus_Api.Migrations
 {
     [DbContext(typeof(CinePlusContext))]
-    [Migration("20230815160702_FixDiscount")]
-    partial class FixDiscount
+    [Migration("20230818152039_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -158,6 +158,28 @@ namespace Cine_Plus_Api.Migrations
                     b.ToTable("Discounts");
                 });
 
+            modelBuilder.Entity("Cine_Plus_Api.Models.Employ", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("User")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("User")
+                        .IsUnique();
+
+                    b.ToTable("Employs");
+                });
+
             modelBuilder.Entity("Cine_Plus_Api.Models.Genre", b =>
                 {
                     b.Property<int>("Id")
@@ -174,6 +196,28 @@ namespace Cine_Plus_Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Genres");
+                });
+
+            modelBuilder.Entity("Cine_Plus_Api.Models.Manager", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("User")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("User")
+                        .IsUnique();
+
+                    b.ToTable("Managers");
                 });
 
             modelBuilder.Entity("Cine_Plus_Api.Models.Movie", b =>
@@ -237,6 +281,32 @@ namespace Cine_Plus_Api.Migrations
                     b.HasIndex("MovieId");
 
                     b.ToTable("ShowMovies");
+                });
+
+            modelBuilder.Entity("Cine_Plus_Api.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("DiscountShowMovie", b =>

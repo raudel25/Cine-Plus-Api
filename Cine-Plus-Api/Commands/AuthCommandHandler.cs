@@ -77,7 +77,7 @@ public class AuthCommandHandler : IAuthCommandHandler
         var password = Password.RandomPassword();
         var user = $"employ{number}";
 
-        var employ = new Employ { Name = user, Password = password };
+        var employ = new Employ { User = user, Password = password };
 
         this._context.Employs.Add(employ);
         await this._context.SaveChangesAsync();
@@ -91,7 +91,7 @@ public class AuthCommandHandler : IAuthCommandHandler
         var password = Password.RandomPassword();
         var user = $"manager{number}";
 
-        var manager = new Manager { Name = user, Password = password };
+        var manager = new Manager { User = user, Password = password };
 
         this._context.Managers.Add(manager);
         await this._context.SaveChangesAsync();

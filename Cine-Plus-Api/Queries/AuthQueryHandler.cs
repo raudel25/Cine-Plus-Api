@@ -66,11 +66,11 @@ public class AuthQueryHandler : IAuthQueryHandler
 
     public async Task<Employ?> Employ(string user)
     {
-        return await this._context.Employs.SingleOrDefaultAsync(employ => employ.Name == user);
+        return await this._context.Employs.SingleOrDefaultAsync(employ => employ.User == user);
     }
 
     public async Task<Manager?> Manager(string user)
     {
-        return await this._context.Managers.SingleOrDefaultAsync(manager => manager.Name == user);
+        return await this._context.Managers.SingleOrDefaultAsync(manager => manager.User == user);
     }
 }
