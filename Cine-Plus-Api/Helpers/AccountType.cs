@@ -46,6 +46,6 @@ public static class AccountTypeMethods
         };
     }
 
-    public static bool Authorice(AccountType current, AccountType accountType) =>
+    public static bool Authorize(AccountType current, AccountType accountType) =>
         ToNumber(current) >= ToNumber(accountType);
 }

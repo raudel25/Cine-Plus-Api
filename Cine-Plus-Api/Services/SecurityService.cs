@@ -27,7 +27,7 @@ public class SecurityService
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, id.ToString()),
-                new Claim(ClaimTypes.Name,name),
+                new Claim(ClaimTypes.Name, name),
                 new Claim(ClaimTypes.Role, AccountTypeMethods.ToString(accountType))
             }),
             Expires = DateTime.UtcNow.AddHours(2),
@@ -46,7 +46,7 @@ public class SecurityService
     public ApiResponse<(int, string, AccountType)> TokenToIdAccountType(string authHeader)
     {
         if (!authHeader.StartsWith("Bearer "))
-            return new ApiResponse<(int, string,AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
+            return new ApiResponse<(int, string, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
         var token = authHeader.Substring("Bearer ".Length).Trim();
 
@@ -56,7 +56,7 @@ public class SecurityService
         var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "nameid");
         var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "unique_name");
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
-        
+
         if (idClaim is null || nameClaim is null || roleClaim is null)
             return new ApiResponse<(int, string, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
@@ -77,5 +77,17 @@ public class SecurityService
         var passwordSystem = _configuration["Admin:Password"];
 
         return user == userSystem && password == passwordSystem;
+    }
+
+    public ApiResponse Authorize(string authorization, AccountType accountType)
+    {
+        var responseSecurity = TokenToIdAccountType(authorization);
+        if (!responseSecurity.Ok)
+            return responseSecurity.ConvertApiResponse();
+
+        var accountTypeCurrent = responseSecurity.Value.Item3;
+        return !AccountTypeMethods.Authorize(accountTypeCurrent, accountType)
+            ? new ApiResponse(HttpStatusCode.Unauthorized, "Unauthorized")
+            : new ApiResponse();
     }
 }
