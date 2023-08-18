@@ -34,9 +34,9 @@ public class AuthController : ControllerBase
         var response = await this._authCommand.User(request);
         if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
 
-        var token = this._securityService.Jwt(response.Value, request.Name, AccountType.User);
+        var token = this._securityService.Jwt(response.Value, request.Name, new UserAccount());
 
-        return new AuthResponse(response.Value, request.Name, token, AccountType.User);
+        return new AuthResponse(response.Value, request.Name, token, new UserAccount());
     }
 
     [HttpPost("user/login")]
@@ -47,15 +47,15 @@ public class AuthController : ControllerBase
         if (user is null || !Password.CheckPassword(user.Password, request.Password))
             return BadRequest(new { message = "Incorrect email or password" });
 
-        var token = this._securityService.Jwt(user.Id, user.Name, AccountType.User);
+        var token = this._securityService.Jwt(user.Id, user.Name, new UserAccount());
 
-        return new AuthResponse(user.Id, user.Name, token, AccountType.User);
+        return new AuthResponse(user.Id, user.Name, token, new UserAccount());
     }
 
     [HttpPost("employ/register"), Authorize]
     public async Task<ActionResult<CreateEmployResponse>> CreateEmploy([FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Manager);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -70,15 +70,15 @@ public class AuthController : ControllerBase
         if (employ is null || employ.Password != request.Password)
             return BadRequest(new { message = "Incorrect email or password" });
 
-        var token = this._securityService.Jwt(employ.Id, "Employ", AccountType.Employ);
+        var token = this._securityService.Jwt(employ.Id, "Employ", new EmployAccount());
 
-        return new AuthResponse(employ.Id, "Employ", token, AccountType.Employ);
+        return new AuthResponse(employ.Id, "Employ", token, new EmployAccount());
     }
 
     [HttpDelete("employ/{id:int}"), Authorize]
     public async Task<IActionResult> DeleteEmploy(int id, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Admin);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -91,7 +91,7 @@ public class AuthController : ControllerBase
     [HttpPost("manager/register"), Authorize]
     public async Task<ActionResult<CreateManagerResponse>> CreateManager([FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Admin);
+        var responseSecurity = this._securityService.Authorize(authorization, new AdminAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -106,15 +106,15 @@ public class AuthController : ControllerBase
         if (manager is null || manager.Password != request.Password)
             return BadRequest(new { message = "Incorrect email or password" });
 
-        var token = this._securityService.Jwt(manager.Id, "Manager", AccountType.Manager);
+        var token = this._securityService.Jwt(manager.Id, "Manager", new ManagerAccount());
 
-        return new AuthResponse(manager.Id, "Manager", token, AccountType.Manager);
+        return new AuthResponse(manager.Id, "Manager", token, new ManagerAccount());
     }
 
     [HttpDelete("manager/{id:int}")]
     public async Task<IActionResult> DeleteManager(int id, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Admin);
+        var responseSecurity = this._securityService.Authorize(authorization, new AdminAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -130,9 +130,9 @@ public class AuthController : ControllerBase
         var auth = this._securityService.AdminCredentials(request.User, request.Password);
         if (!auth) return BadRequest(new { message = "Incorrect email or password" });
 
-        var token = this._securityService.Jwt(0, "Admin", AccountType.Admin);
+        var token = this._securityService.Jwt(0, "Admin", new AdminAccount());
 
-        return new AuthResponse(0, "Admin", token, AccountType.Admin);
+        return new AuthResponse(0, "Admin", token, new AdminAccount());
     }
 
     [HttpGet("renew"), Authorize]

@@ -36,7 +36,7 @@ public class MovieController : ControllerBase
     [HttpPost, Authorize]
     public async Task<ActionResult<int>> Post(CreateMovie request, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Manager);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -50,7 +50,7 @@ public class MovieController : ControllerBase
     [HttpPut, Authorize]
     public async Task<ActionResult> Put(UpdateMovie request, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Manager);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -64,7 +64,7 @@ public class MovieController : ControllerBase
     [HttpDelete("{id:int}"), Authorize]
     public async Task<ActionResult> Delete(int id, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Manager);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 

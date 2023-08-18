@@ -1,3 +1,5 @@
+using Cine_Plus_Api.Helpers;
+
 namespace Cine_Plus_Api.Responses;
 
 public class AuthResponse
@@ -8,13 +10,13 @@ public class AuthResponse
 
     public string User { get; set; }
 
-    public string AccountType { get; set; }
+    public string Account { get; set; }
 
-    public AuthResponse(int id, string user, string token, Helpers.AccountType accountType)
+    public AuthResponse(int id, string user, string token, Account account)
     {
         this.Id = id;
         this.Token = token;
-        this.AccountType = Helpers.AccountTypeMethods.ToString(accountType);
+        this.Account = account.ToString();
         this.User = user;
     }
 }

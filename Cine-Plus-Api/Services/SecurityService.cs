@@ -17,7 +17,7 @@ public class SecurityService
         this._configuration = configuration;
     }
 
-    public string Jwt(int id, string name, AccountType accountType)
+    public string Jwt(int id, string name, Account account)
     {
         var issuer = _configuration["Jwt:Issuer"];
         var audience = _configuration["Jwt:Audience"];
@@ -28,7 +28,7 @@ public class SecurityService
             {
                 new Claim(ClaimTypes.NameIdentifier, id.ToString()),
                 new Claim(ClaimTypes.Name, name),
-                new Claim(ClaimTypes.Role, AccountTypeMethods.ToString(accountType))
+                new Claim(ClaimTypes.Role, account.ToString())
             }),
             Expires = DateTime.UtcNow.AddHours(2),
             Issuer = issuer,
@@ -43,10 +43,10 @@ public class SecurityService
         return jwtToken;
     }
 
-    public ApiResponse<(int, string, AccountType)> TokenToIdAccountType(string authHeader)
+    public ApiResponse<(int, string, Account)> TokenToIdAccountType(string authHeader)
     {
         if (!authHeader.StartsWith("Bearer "))
-            return new ApiResponse<(int, string, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
+            return new ApiResponse<(int, string, Account)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
         var token = authHeader.Substring("Bearer ".Length).Trim();
 
@@ -58,16 +58,16 @@ public class SecurityService
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
 
         if (idClaim is null || nameClaim is null || roleClaim is null)
-            return new ApiResponse<(int, string, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
+            return new ApiResponse<(int, string, Account)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
         try
         {
-            return new ApiResponse<(int, string, AccountType)>((int.Parse(idClaim.Value), roleClaim.Value,
-                AccountTypeMethods.ToAccountType(roleClaim.Value)));
+            return new ApiResponse<(int, string, Account)>((int.Parse(idClaim.Value), roleClaim.Value,
+                Account.StringToAccount(roleClaim.Value)));
         }
         catch
         {
-            return new ApiResponse<(int, string, AccountType)>(HttpStatusCode.Unauthorized, "Unauthorized");
+            return new ApiResponse<(int, string, Account)>(HttpStatusCode.Unauthorized, "Unauthorized");
         }
     }
 
@@ -79,14 +79,14 @@ public class SecurityService
         return user == userSystem && password == passwordSystem;
     }
 
-    public ApiResponse Authorize(string authorization, AccountType accountType)
+    public ApiResponse Authorize(string authorization, Account account)
     {
         var responseSecurity = TokenToIdAccountType(authorization);
         if (!responseSecurity.Ok)
             return responseSecurity.ConvertApiResponse();
 
-        var accountTypeCurrent = responseSecurity.Value.Item3;
-        return !AccountTypeMethods.Authorize(accountTypeCurrent, accountType)
+        var accountCurrent = responseSecurity.Value.Item3;
+        return accountCurrent.Level() < account.Level()
             ? new ApiResponse(HttpStatusCode.Unauthorized, "Unauthorized")
             : new ApiResponse();
     }

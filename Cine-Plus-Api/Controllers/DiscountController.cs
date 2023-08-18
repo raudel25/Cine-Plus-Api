@@ -36,7 +36,7 @@ public class DiscountController : ControllerBase
     [HttpPost, Authorize]
     public async Task<ActionResult<int>> Post(CreateDiscount request, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Manager);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -50,7 +50,7 @@ public class DiscountController : ControllerBase
     [HttpPut, Authorize]
     public async Task<ActionResult> Put(UpdateDiscount request, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Manager);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
@@ -64,7 +64,7 @@ public class DiscountController : ControllerBase
     [HttpDelete("{id:int}"), Authorize]
     public async Task<ActionResult> Delete(int id, [FromHeader] string authorization)
     {
-        var responseSecurity = this._securityService.Authorize(authorization, AccountType.Manager);
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)
             return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
 
