@@ -1,5 +1,7 @@
+using System.Net;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Queries;
+using Cine_Plus_Api.Responses;
 using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +12,9 @@ public interface IAvailableSeatCommandHandler
     Task Create(ShowMovie showMovie, double price);
 
     Task Update();
-    
+
+    Task<ApiResponse> Reserve(int id);
+
     Task Remove(IEnumerable<AvailableSeat> seats);
 }
 
@@ -41,6 +45,27 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
         var notAvailable = available.Where(seat => !ShowMovieQueryHandler.AvailableShowMovie(seat.ShowMovie));
 
         await Remove(notAvailable);
+    }
+
+    public async Task<ApiResponse> Reserve(int id)
+    {
+        var seat = await _context.AvailableSeats.SingleOrDefaultAsync(seat => seat.Id == id);
+        if (seat is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found seat");
+
+        if (!seat.Available) return new ApiResponse(HttpStatusCode.BadRequest, "The seat has been reserved");
+
+        try
+        {
+            seat.Available = true;
+            this._context.AvailableSeats.Update(seat);
+            await this._context.SaveChangesAsync();
+
+            return new ApiResponse();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new ApiResponse(HttpStatusCode.BadRequest, "The seat has been reserved");
+        }
     }
 
     public async Task Remove(IEnumerable<AvailableSeat> seats)
