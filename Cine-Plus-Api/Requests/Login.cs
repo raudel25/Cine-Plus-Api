@@ -1,6 +1,6 @@
 namespace Cine_Plus_Api.Requests;
 
-public class LoginEmploy
+public class Login
 {
     public string User { get; set; } = null!;
 

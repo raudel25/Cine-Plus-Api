@@ -18,16 +18,17 @@ public class CreateMovie
 
     public ICollection<string> Actors { get; set; } = null!;
 
-    public Movie Movie()
+    public virtual Movie Movie()
     {
         var director = new Director { Name = this.Director };
-        var genre = new Genre { Name = this.Director };
+        var genre = new Genre { Name = this.Genre };
         var country = new Country { Name = this.Country };
         var actors = Actors.Select((actor) => new Actor { Name = actor }).ToList();
 
         return new Movie
         {
-            Actors = actors, Country = country, Director = director, Genre = genre, Name = this.Name,
+            Actors = actors, Country = country, Duration = this.Duration, Director = director, Genre = genre,
+            Name = this.Name,
             Rating = this.Rating
         };
     }

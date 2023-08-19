@@ -39,10 +39,24 @@ public class AuthController : ControllerBase
         return new AuthResponse(response.Value, request.Name, token, new UserAccount());
     }
 
-    [HttpPost("user/login")]
-    public async Task<ActionResult<AuthResponse>> LoginUser(LoginUser request)
+    [HttpPut("user/update"), Authorize]
+    public async Task<ActionResult<AuthResponse>> UpdateUser([FromHeader] string authorization, UpdateUser request)
     {
-        var user = await this._authQuery.User(request.Email);
+        var responseAuth = this._securityService.TokenToIdAccountType(authorization);
+        if (!responseAuth.Ok) return StatusCode((int)responseAuth.Status, new { message = responseAuth.Message });
+
+        if (responseAuth.Value.Item1 != request.Id) return Unauthorized(new { message = "Unauthorized" });
+
+        var response = await this._authCommand.User(request);
+        if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
+
+        return Ok();
+    }
+
+    [HttpPost("user/login")]
+    public async Task<ActionResult<AuthResponse>> LoginUser(Login request)
+    {
+        var user = await this._authQuery.User(request.User);
 
         if (user is null || !Password.CheckPassword(user.Password, request.Password))
             return BadRequest(new { message = "Incorrect email or password" });
@@ -63,7 +77,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("employ/login")]
-    public async Task<ActionResult<AuthResponse>> LoginEmploy(LoginEmploy request)
+    public async Task<ActionResult<AuthResponse>> LoginEmploy(Login request)
     {
         var employ = await this._authQuery.Employ(request.User);
 
@@ -99,7 +113,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("manager/login")]
-    public async Task<ActionResult<AuthResponse>> LoginManager(LoginManager request)
+    public async Task<ActionResult<AuthResponse>> LoginManager(Login request)
     {
         var manager = await this._authQuery.Manager(request.User);
 
@@ -125,7 +139,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("admin")]
-    public ActionResult<AuthResponse> Admin(LoginAdmin request)
+    public ActionResult<AuthResponse> Admin(Login request)
     {
         var auth = this._securityService.AdminCredentials(request.User, request.Password);
         if (!auth) return BadRequest(new { message = "Incorrect email or password" });

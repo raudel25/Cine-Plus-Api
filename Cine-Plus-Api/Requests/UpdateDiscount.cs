@@ -6,5 +6,11 @@ public class UpdateDiscount : CreateDiscount
 {
     public int Id { get; set; }
 
-    public new Discount Discount() => new() { Id = this.Id, Name = this.Name, Description = this.Description, DiscountPercent = this.DiscountPercent };
+    public override Discount Discount()
+    {
+        var discount = base.Discount();
+        discount.Id = this.Id;
+
+        return discount;
+    }
 }
