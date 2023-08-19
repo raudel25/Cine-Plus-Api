@@ -13,6 +13,8 @@ public class AvailableSeat
 
     [Required] public int Number { get; set; }
 
+    [Required] public bool Available { get; set; }
+
     [ForeignKey("ShowMovie")] public int ShowMovieId { get; set; }
 
     public ShowMovie ShowMovie { get; set; } = null!;

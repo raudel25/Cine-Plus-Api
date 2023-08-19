@@ -20,18 +20,18 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
 
     private readonly IDiscountQueryHandler _discountQuery;
 
-    private readonly IAvailableSeatsCommandHandler _availableSeatsCommand;
+    private readonly IAvailableSeatCommandHandler _availableSeatsCommand;
 
     public ShowMovieCommandHandler(CinePlusContext context, IShowMovieQueryHandler showMovieQuery,
-        IDiscountQueryHandler discountQuery, IAvailableSeatsCommandHandler availableSeatsCommand)
+        IDiscountQueryHandler discountQuery, IAvailableSeatCommandHandler availableSeatCommand)
     {
         this._context = context;
         this._showMovieQuery = showMovieQuery;
         this._discountQuery = discountQuery;
-        this._availableSeatsCommand = availableSeatsCommand;
+        this._availableSeatsCommand = availableSeatCommand;
     }
 
-    public async Task<ApiResponse> AddDiscounts(ShowMovie showMovie, ICollection<int> discounts)
+    private async Task<ApiResponse> AddDiscounts(ShowMovie showMovie, ICollection<int> discounts)
     {
         if (discounts.Count != discounts.Distinct().ToList().Count)
             return new ApiResponse(HttpStatusCode.BadRequest, "The show movie contains repeated discounts");
@@ -66,7 +66,7 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
         this._context.ShowMovies.Add(showMovie);
         await this._context.SaveChangesAsync();
 
-        await this._availableSeatsCommand.Handler(showMovie, request.Price);
+        await this._availableSeatsCommand.Create(showMovie, request.Price);
 
         return new ApiResponse<int>(showMovie.Id);
     }

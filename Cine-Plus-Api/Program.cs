@@ -57,7 +57,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICinemaCommandHandler, CinemaCommandHandler>();
         services.AddScoped<IDiscountQueryHandler, DiscountQueryHandler>();
         services.AddScoped<IDiscountCommandHandler, DiscountCommandHandler>();
-        services.AddScoped<IAvailableSeatsCommandHandler, AvailableSeatsCommandHandler>();
+        services.AddScoped<IAvailableSeatCommandHandler, AvailableSeatCommandHandler>();
         services.AddScoped<IAvailableSeatQueryHandler, AvailableSeatQueryHandler>();
         services.AddScoped<IAuthCommandHandler, AuthCommandHandler>();
         services.AddScoped<IAuthQueryHandler, AuthQueryHandler>();

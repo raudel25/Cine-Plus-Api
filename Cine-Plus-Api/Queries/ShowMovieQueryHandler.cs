@@ -61,7 +61,7 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
         return (start <= startMovie && startMovie <= end) || (end <= startMovie && endMovie <= end);
     }
 
-    private bool AvailableShowMovie(ShowMovie showMovie)
+    public static bool AvailableShowMovie(ShowMovie showMovie)
     {
         var now = DateTime.Now;
         return ((DateTimeOffset)now).ToUnixTimeSeconds() <= showMovie.Date;
