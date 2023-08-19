@@ -57,6 +57,9 @@ namespace Cine_Plus_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<bool>("Available")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("Number")
                         .HasColumnType("int");
 
@@ -65,6 +68,10 @@ namespace Cine_Plus_Api.Migrations
 
                     b.Property<int>("ShowMovieId")
                         .HasColumnType("int");
+
+                    b.Property<byte[]>("Timestamp")
+                        .IsRequired()
+                        .HasColumnType("longblob");
 
                     b.HasKey("Id");
 

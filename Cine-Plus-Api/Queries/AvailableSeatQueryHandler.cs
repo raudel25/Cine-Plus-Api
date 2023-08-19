@@ -8,6 +8,8 @@ namespace Cine_Plus_Api.Queries;
 public interface IAvailableSeatQueryHandler
 {
     Task<IEnumerable<AvailableSeat>> Handler();
+
+    Task<AvailableSeat?> Handler(int id);
 }
 
 public class AvailableSeatQueryHandler : IAvailableSeatQueryHandler
@@ -26,5 +28,11 @@ public class AvailableSeatQueryHandler : IAvailableSeatQueryHandler
     {
         await this._availableSeatCommand.Update();
         return await this._context.AvailableSeats.ToListAsync();
+    }
+
+    public async Task<AvailableSeat?> Handler(int id)
+    {
+        return await this._context.AvailableSeats.Include(seat => seat.ShowMovie.Discounts)
+            .SingleOrDefaultAsync(seat => seat.Id == id);
     }
 }

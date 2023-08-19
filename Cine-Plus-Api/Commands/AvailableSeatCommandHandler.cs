@@ -13,7 +13,7 @@ public interface IAvailableSeatCommandHandler
 
     Task Update();
 
-    Task<ApiResponse> Reserve(int id);
+    Task<ApiResponse> Reserve(AvailableSeat seat);
 
     Task Remove(IEnumerable<AvailableSeat> seats);
 }
@@ -47,11 +47,8 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
         await Remove(notAvailable);
     }
 
-    public async Task<ApiResponse> Reserve(int id)
+    public async Task<ApiResponse> Reserve(AvailableSeat seat)
     {
-        var seat = await _context.AvailableSeats.SingleOrDefaultAsync(seat => seat.Id == id);
-        if (seat is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found seat");
-
         if (!seat.Available) return new ApiResponse(HttpStatusCode.BadRequest, "The seat has been reserved");
 
         try
