@@ -28,6 +28,10 @@ public class PaymentService : IPaymentService
 
     private readonly CacheService _cacheService;
 
+    public static string RolePayment => "payment";
+
+    public static string RoleCancelPayment => "cancel_payment";
+
     public PaymentService(IAvailableSeatCommandHandler availableSeatCommand,
         IAvailableSeatQueryHandler availableSeatQuery, SecurityService securityService,
         IPayOrderCommandHandler payOrderCommand, IPayOrderQueryHandler payOrderQuery, CacheService cacheService)
@@ -68,7 +72,7 @@ public class PaymentService : IPaymentService
         var createPayOrder = new CreatePayOrder { Paid = false, PaidSeats = validSeats, Price = price };
         var id = await this._payOrderCommand.Handler(createPayOrder);
 
-        var token = this._securityService.Jwt(id);
+        var token = this._securityService.JwtPay(id, RolePayment, DateTime.UtcNow.AddMinutes(10));
         responsePay.Token = token;
 
         this._cacheService.Add(id.ToString(), id, TimeSpan.FromMinutes(10), CancelPayOrder);
