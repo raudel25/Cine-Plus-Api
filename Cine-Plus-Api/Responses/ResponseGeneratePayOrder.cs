@@ -1,10 +1,12 @@
 namespace Cine_Plus_Api.Responses;
 
-public class ResponseCreatePayOrder
+public class ResponseGeneratePayOrder
 {
     public bool Ok => this.Token is not null;
 
     public string? Token { get; set; }
+
+    public double Price { get; set; }
 
     public ICollection<ResponseSeatOrder> Seats { get; set; } = null!;
 }

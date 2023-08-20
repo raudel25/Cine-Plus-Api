@@ -61,6 +61,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAvailableSeatQueryHandler, AvailableSeatQueryHandler>();
         services.AddScoped<IAuthCommandHandler, AuthCommandHandler>();
         services.AddScoped<IAuthQueryHandler, AuthQueryHandler>();
+        services.AddScoped<IPayOrderCommandHandler, PayOrderCommandHandler>();
+        services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<SecurityService>();
     }
 

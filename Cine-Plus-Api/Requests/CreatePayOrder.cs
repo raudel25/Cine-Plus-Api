@@ -1,13 +1,14 @@
+using Cine_Plus_Api.Models;
+
 namespace Cine_Plus_Api.Requests;
 
 public class CreatePayOrder
 {
-    public ICollection<SeatOrder> Seats { get; set; } = null!;
-}
+    public double Price { get; set; }
 
-public class SeatOrder
-{
-    public int Id { get; set; }
+    public bool Paid { get; set; }
 
-    public ICollection<int> Discounts { get; set; } = null!;
+    public ICollection<PaidSeat> PaidSeats { get; set; } = null!;
+
+    public PayOrder PayOrder() => new() { Price = this.Price, PaidSeats = this.PaidSeats, Paid = this.Paid };
 }

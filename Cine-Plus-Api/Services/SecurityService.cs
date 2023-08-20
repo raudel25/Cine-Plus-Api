@@ -44,10 +44,8 @@ public class SecurityService
         return jwtToken;
     }
 
-    public string Jwt(object payload)
+    public string Jwt(int id)
     {
-        var payloadJson = JsonConvert.SerializeObject(payload);
-
         var issuer = _configuration["Jwt:Issuer"];
         var audience = _configuration["Jwt:Audience"];
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!);
@@ -55,7 +53,7 @@ public class SecurityService
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim("payload", payloadJson)
+                new Claim(ClaimTypes.NameIdentifier, id.ToString()),
             }),
             Expires = DateTime.UtcNow.AddMinutes(10),
             Issuer = issuer,
