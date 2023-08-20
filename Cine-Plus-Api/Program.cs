@@ -65,6 +65,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPayOrderQueryHandler, PayOrderQueryHandler>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<SecurityService>();
+        services.AddScoped<CacheService>();
+        services.AddMemoryCache();
     }
 
     public static void AddDataBase(this IServiceCollection services, IConfigurationRoot configuration)
