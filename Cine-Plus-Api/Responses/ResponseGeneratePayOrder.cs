@@ -2,6 +2,8 @@ namespace Cine_Plus_Api.Responses;
 
 public class ResponseGeneratePayOrder
 {
+    public int Id { get; set; }
+    
     public bool Ok => this.Token is not null;
 
     public string? Token { get; set; }

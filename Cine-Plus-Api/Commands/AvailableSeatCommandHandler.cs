@@ -15,6 +15,8 @@ public interface IAvailableSeatCommandHandler
 
     Task<ApiResponse> Reserve(AvailableSeat seat);
 
+    Task Available(int id);
+
     Task Remove(IEnumerable<AvailableSeat> seats);
 }
 
@@ -22,9 +24,12 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
 {
     private readonly CinePlusContext _context;
 
-    public AvailableSeatCommandHandler(CinePlusContext context)
+    private readonly IAvailableSeatQueryHandler _availableSeatQuery;
+
+    public AvailableSeatCommandHandler(CinePlusContext context, IAvailableSeatQueryHandler availableSeatQuery)
     {
         this._context = context;
+        this._availableSeatQuery = availableSeatQuery;
     }
 
     public async Task Create(ShowMovie showMovie, double price)
@@ -72,6 +77,17 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
             this._context.Remove(seat);
         }
 
+        await this._context.SaveChangesAsync();
+    }
+
+    public async Task Available(int id)
+    {
+        var seat = await this._availableSeatQuery.Handler(id);
+        if (seat is null) return;
+
+        seat.Available = true;
+
+        this._context.AvailableSeats.Update(seat);
         await this._context.SaveChangesAsync();
     }
 }

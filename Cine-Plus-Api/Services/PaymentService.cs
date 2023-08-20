@@ -10,6 +10,10 @@ namespace Cine_Plus_Api.Services;
 public interface IPaymentService
 {
     Task<ResponseGeneratePayOrder> GeneratePayOrder(GeneratePayOrder request);
+
+    Task Timer(int id);
+    
+    Task<ApiResponse> CancelPayOrder(int id);
 }
 
 public class PaymentService : IPaymentService
@@ -22,14 +26,17 @@ public class PaymentService : IPaymentService
 
     private readonly SecurityService _securityService;
 
+    private readonly IPayOrderQueryHandler _payOrderQuery;
+
     public PaymentService(IAvailableSeatCommandHandler availableSeatCommand,
         IAvailableSeatQueryHandler availableSeatQuery, SecurityService securityService,
-        IPayOrderCommandHandler payOrderCommand)
+        IPayOrderCommandHandler payOrderCommand, IPayOrderQueryHandler payOrderQuery)
     {
         this._availableSeatCommand = availableSeatCommand;
         this._availableSeatQuery = availableSeatQuery;
         this._securityService = securityService;
         this._payOrderCommand = payOrderCommand;
+        this._payOrderQuery = payOrderQuery;
     }
 
     public async Task<ResponseGeneratePayOrder> GeneratePayOrder(GeneratePayOrder request)
@@ -63,7 +70,32 @@ public class PaymentService : IPaymentService
         var token = this._securityService.Jwt(id);
         responsePay.Token = token;
 
+        responsePay.Id = id;
+
         return responsePay;
+    }
+
+    public async Task Timer(int id)
+    {
+        await Task.Delay(TimeSpan.FromMinutes(10));
+        await CancelPayOrder(id);
+    }
+
+    public async Task<ApiResponse> CancelPayOrder(int id)
+    {
+        var payOrder = await this._payOrderQuery.Handler(id);
+        if (payOrder is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found pay order");
+
+        if (payOrder.Paid) return new ApiResponse(HttpStatusCode.BadRequest, "The pay order has been paid");
+
+        foreach (var seat in payOrder.PaidSeats)
+        {
+            await this._availableSeatCommand.Available(seat.Id);
+        }
+
+        await this._payOrderCommand.Handler(payOrder);
+
+        return new ApiResponse();
     }
 
     private async Task<ApiResponse<PaidSeat>> ProcessSeat(GenerateSeatOrder seatOrder)
