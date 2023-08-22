@@ -8,6 +8,14 @@ using Cine_Plus_Api.Responses;
 
 namespace Cine_Plus_Api.Services;
 
+public static class MyClaims
+{
+    public const string Id = "id";
+    public const string Name = "name";
+    public const string Role = "role";
+    public const string Date = "date";
+}
+
 public class SecurityService
 {
     private readonly IConfiguration _configuration;
@@ -21,9 +29,9 @@ public class SecurityService
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, id.ToString()),
-            new Claim(ClaimTypes.Name, name),
-            new Claim(ClaimTypes.Role, account.ToString())
+            new Claim(MyClaims.Id, id.ToString()),
+            new Claim(MyClaims.Name, name),
+            new Claim(MyClaims.Role, account.ToString())
         };
 
         var expires = DateTime.UtcNow.AddHours(2);
@@ -36,9 +44,9 @@ public class SecurityService
         var now = DateTime.UtcNow;
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, id.ToString()),
-            new Claim(ClaimTypes.Role, role),
-            new Claim("date", ((DateTimeOffset)now).ToUnixTimeSeconds().ToString())
+            new Claim(MyClaims.Id, id.ToString()),
+            new Claim(MyClaims.Role, role),
+            new Claim(MyClaims.Date, ((DateTimeOffset)now).ToUnixTimeSeconds().ToString())
         };
 
         return Jwt(expires, claims);
@@ -72,9 +80,9 @@ public class SecurityService
 
         var jwtToken = response.Value!;
 
-        var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-        var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
-        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Id);
+        var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Name);
+        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Role);
 
         if (idClaim is null || nameClaim is null || roleClaim is null)
             return new ApiResponse<(int, string, Account)>(HttpStatusCode.Unauthorized, "Unauthorized");
@@ -97,8 +105,9 @@ public class SecurityService
 
         var jwtToken = response.Value!;
 
-        var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-        var dateClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "date");
+        var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Id);
+        var dateClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Date);
+        // TODO: Revisar role
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
 
         if (idClaim is null || dateClaim is null || roleClaim is null)
