@@ -9,6 +9,8 @@ public class ResponseGeneratePayOrder
     public string? Token { get; set; }
 
     public double Price { get; set; }
+    
+    public long Date { get; set; }
 
     public ICollection<ResponseSeatOrder> Seats { get; set; } = null!;
 }

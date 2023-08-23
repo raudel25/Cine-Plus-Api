@@ -28,13 +28,14 @@ public class PaymentService : IPaymentService
 
     private readonly CheckOrderService _checkOrderService;
 
-    public static string RolePayment => "payment";
+    private const string Payment = "payment";
 
-    public static string RoleCancelPayment => "cancel_payment";
+    private const string CancelPayment = "cancel_payment";
 
     public PaymentService(IAvailableSeatCommandHandler availableSeatCommand,
         IAvailableSeatQueryHandler availableSeatQuery, SecurityService securityService,
-        IPayOrderCommandHandler payOrderCommand, IPayOrderQueryHandler payOrderQuery, CheckOrderService checkOrderService)
+        IPayOrderCommandHandler payOrderCommand, IPayOrderQueryHandler payOrderQuery,
+        CheckOrderService checkOrderService)
     {
         this._availableSeatCommand = availableSeatCommand;
         this._availableSeatQuery = availableSeatQuery;
@@ -46,24 +47,7 @@ public class PaymentService : IPaymentService
 
     public async Task<ResponseGeneratePayOrder> GeneratePayOrder(GeneratePayOrder request)
     {
-        var validSeats = new List<PaidSeat>();
-
-        var seatsResponse = new List<ResponseSeatOrder>();
-
-        double price = 0;
-
-        foreach (var seat in request.Seats)
-        {
-            var response = await ProcessSeat(seat);
-
-            if (response.Ok)
-            {
-                validSeats.Add(response.Value!);
-                price += CalculatePrice(response.Value!);
-            }
-
-            seatsResponse.Add(new ResponseSeatOrder { Id = seat.Id, Message = response.Ok ? "Ok" : response.Message! });
-        }
+        var (validSeats, seatsResponse, price) = await ProcessSeats(request);
 
         var responsePay = new ResponseGeneratePayOrder { Seats = seatsResponse, Price = price };
 
@@ -72,8 +56,11 @@ public class PaymentService : IPaymentService
         var createPayOrder = new CreatePayOrder { Paid = false, PaidSeats = validSeats, Price = price };
         var id = await this._payOrderCommand.Handler(createPayOrder);
 
-        var token = this._securityService.JwtPay(id, RolePayment, DateTime.UtcNow.AddMinutes(10));
+        var token = this._securityService.JwtPay(id, Payment, DateTime.UtcNow.AddMinutes(10));
         responsePay.Token = token;
+
+        var now = DateTime.UtcNow;
+        responsePay.Date = ((DateTimeOffset)now).ToUnixTimeSeconds();
 
         this._checkOrderService.Add(id.ToString(), id, TimeSpan.FromMinutes(10));
 
@@ -97,6 +84,30 @@ public class PaymentService : IPaymentService
         await this._payOrderCommand.Handler(payOrder);
 
         return new ApiResponse();
+    }
+
+    private async Task<(List<PaidSeat>, List<ResponseSeatOrder>, double)> ProcessSeats(GeneratePayOrder request)
+    {
+        var validSeats = new List<PaidSeat>();
+
+        var seatsResponse = new List<ResponseSeatOrder>();
+
+        double price = 0;
+
+        foreach (var seat in request.Seats)
+        {
+            var response = await ProcessSeat(seat);
+
+            if (response.Ok)
+            {
+                validSeats.Add(response.Value!);
+                price += CalculatePrice(response.Value!);
+            }
+
+            seatsResponse.Add(new ResponseSeatOrder { Id = seat.Id, Message = response.Ok ? "Ok" : response.Message! });
+        }
+
+        return (validSeats, seatsResponse, price);
     }
 
     private async Task<ApiResponse<PaidSeat>> ProcessSeat(GenerateSeatOrder seatOrder)
@@ -126,7 +137,7 @@ public class PaymentService : IPaymentService
         });
     }
 
-    private double CalculatePrice(PaidSeat seat)
+    private static double CalculatePrice(PaidSeat seat)
     {
         var d = seat.Discounts.Select(discount => discount.DiscountPercent).Sum();
         return (100 - d) * seat.Price / 100;

@@ -14,6 +14,7 @@ public static class MyClaims
     public const string Name = "name";
     public const string Role = "role";
     public const string Date = "date";
+    public const string TypePayment = "type_payment";
 }
 
 public class SecurityService
@@ -39,13 +40,13 @@ public class SecurityService
         return Jwt(expires, claims);
     }
 
-    public string JwtPay(int id, string role, DateTime expires)
+    public string JwtPay(int id, string type, DateTime expires)
     {
         var now = DateTime.UtcNow;
         var claims = new[]
         {
             new Claim(MyClaims.Id, id.ToString()),
-            new Claim(MyClaims.Role, role),
+            new Claim(MyClaims.TypePayment, type),
             new Claim(MyClaims.Date, ((DateTimeOffset)now).ToUnixTimeSeconds().ToString())
         };
 
@@ -107,13 +108,12 @@ public class SecurityService
 
         var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Id);
         var dateClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Date);
-        // TODO: Revisar role
-        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        var typeClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.TypePayment);
 
-        if (idClaim is null || dateClaim is null || roleClaim is null)
+        if (idClaim is null || dateClaim is null || typeClaim is null)
             return new ApiResponse<(int, string, long)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
-        return new ApiResponse<(int, string, long)>((int.Parse(idClaim.Value), roleClaim.Value,
+        return new ApiResponse<(int, string, long)>((int.Parse(idClaim.Value),typeClaim.Value,
             long.Parse(dateClaim.Value)));
     }
 
