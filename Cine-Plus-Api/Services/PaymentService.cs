@@ -26,7 +26,7 @@ public class PaymentService : IPaymentService
 
     private readonly IPayOrderQueryHandler _payOrderQuery;
 
-    private readonly CacheService _cacheService;
+    private readonly CheckOrderService _checkOrderService;
 
     public static string RolePayment => "payment";
 
@@ -34,14 +34,14 @@ public class PaymentService : IPaymentService
 
     public PaymentService(IAvailableSeatCommandHandler availableSeatCommand,
         IAvailableSeatQueryHandler availableSeatQuery, SecurityService securityService,
-        IPayOrderCommandHandler payOrderCommand, IPayOrderQueryHandler payOrderQuery, CacheService cacheService)
+        IPayOrderCommandHandler payOrderCommand, IPayOrderQueryHandler payOrderQuery, CheckOrderService checkOrderService)
     {
         this._availableSeatCommand = availableSeatCommand;
         this._availableSeatQuery = availableSeatQuery;
         this._securityService = securityService;
         this._payOrderCommand = payOrderCommand;
         this._payOrderQuery = payOrderQuery;
-        this._cacheService = cacheService;
+        this._checkOrderService = checkOrderService;
     }
 
     public async Task<ResponseGeneratePayOrder> GeneratePayOrder(GeneratePayOrder request)
@@ -75,14 +75,14 @@ public class PaymentService : IPaymentService
         var token = this._securityService.JwtPay(id, RolePayment, DateTime.UtcNow.AddMinutes(10));
         responsePay.Token = token;
 
-        this._cacheService.Add(id.ToString(), id, TimeSpan.FromMinutes(10), CancelPayOrder);
+        this._checkOrderService.Add(id.ToString(), id, TimeSpan.FromMinutes(10));
 
         return responsePay;
     }
 
     public async Task<ApiResponse> CancelPayOrder(int id)
     {
-        this._cacheService.Remove(id.ToString());
+        this._checkOrderService.Remove(id.ToString());
 
         var payOrder = await this._payOrderQuery.Handler(id);
         if (payOrder is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found pay order");

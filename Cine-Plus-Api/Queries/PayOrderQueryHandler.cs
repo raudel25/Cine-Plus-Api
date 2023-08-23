@@ -20,6 +20,7 @@ public class PayOrderQueryHandler : IPayOrderQueryHandler
 
     public async Task<PayOrder?> Handler(int id)
     {
-        return await this._context.PayOrders.SingleOrDefaultAsync(payOrder => payOrder.Id == id);
+        return await this._context.PayOrders.Include(order => order.PaidSeats)
+            .SingleOrDefaultAsync(payOrder => payOrder.Id == id);
     }
 }

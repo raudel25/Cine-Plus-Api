@@ -4,7 +4,6 @@ using Cine_Plus_Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace Cine_Plus_Api.Controllers;
 
 [ApiController]

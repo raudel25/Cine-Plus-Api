@@ -44,7 +44,7 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
 
         var (start, end) = (showMovie.Date, showMovie.Date + movie.Duration);
 
-        var showMovies = await this._context.ShowMovies.Where(sm => sm.CinemaId == showMovie.Id).ToListAsync();
+        var showMovies = await this._context.ShowMovies.Where(sm => sm.CinemaId == showMovie.CinemaId).ToListAsync();
         showMovies = showMovies.Where(sm => Conflict(start, end, sm.Date, sm.Date + sm.Movie.Duration)).ToList();
 
         return showMovies.Count == 0

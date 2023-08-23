@@ -15,7 +15,7 @@ public class AvailableSeat
 
     [Required] public bool Available { get; set; }
 
-    public byte[] Timestamp { get; set; } = null!;
+    public DateTime RowVersion { get; set; }
 
     [ForeignKey("ShowMovie")] public int ShowMovieId { get; set; }
 

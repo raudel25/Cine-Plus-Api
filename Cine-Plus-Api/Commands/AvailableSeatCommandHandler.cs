@@ -58,7 +58,7 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
 
         try
         {
-            seat.Available = true;
+            seat.Available = false;
             this._context.AvailableSeats.Update(seat);
             await this._context.SaveChangesAsync();
 

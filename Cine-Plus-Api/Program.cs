@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi.Models;
 using Cine_Plus_Api.Services;
 using Cine_Plus_Api.Commands;
 using Cine_Plus_Api.Queries;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,7 +91,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPayOrderQueryHandler, PayOrderQueryHandler>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<SecurityService>();
-        services.AddScoped<CacheService>();
+        services.AddSingleton<CheckOrderService>();
         services.AddMemoryCache();
     }
 

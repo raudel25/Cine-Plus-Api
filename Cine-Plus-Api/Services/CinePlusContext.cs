@@ -36,4 +36,12 @@ public class CinePlusContext : DbContext
     public CinePlusContext(DbContextOptions<CinePlusContext> options) : base(options)
     {
     }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AvailableSeat>()
+            .Property(a => a.RowVersion)
+            .IsConcurrencyToken()
+            .ValueGeneratedOnAddOrUpdate();
+    }
 }
