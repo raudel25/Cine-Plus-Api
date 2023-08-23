@@ -10,8 +10,10 @@ public class Employ
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    
+
     [Required] public string User { get; set; } = null!;
-    
+
     [Required] public string Password { get; set; } = null!;
+
+    public ICollection<Ticket> Tickets { get; set; } = null!;
 }
