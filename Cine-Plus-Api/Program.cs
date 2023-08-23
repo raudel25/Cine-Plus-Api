@@ -105,7 +105,7 @@ public static class ServiceCollectionExtensions
             options.UseMySql(connectionString, serverVersion));
     }
 
-    public static void AddMyAuthentication(this IServiceCollection services, IConfigurationRoot configuration)
+    public static void AddMyAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>

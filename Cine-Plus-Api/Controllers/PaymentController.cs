@@ -12,21 +12,30 @@ public class PaymentController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
 
-    public PaymentController(IPaymentService paymentService)
+    private readonly SecurityService _securityService;
+
+    public PaymentController(IPaymentService paymentService, SecurityService securityService)
     {
         this._paymentService = paymentService;
+        this._securityService = securityService;
     }
 
-    [HttpPost, Authorize]
+    [HttpPost]
     public async Task<ResponseGeneratePayOrder> Post(GeneratePayOrder request)
     {
         return await this._paymentService.GeneratePayOrder(request);
     }
 
-    [HttpDelete("{id:int}"), Authorize]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete]
+    public async Task<IActionResult> Delete(CancelOrder request)
     {
-        var response = await this._paymentService.CancelPayOrder(id);
+        if (!this._securityService.ValidateToken(request.Token)) return BadRequest(new { message = "Invalid token" });
+
+        var responseToken = this._securityService.DecodingPay(request.Token);
+        if (!responseToken.Ok || responseToken.Value.Item2 != PaymentService.Payment)
+            return BadRequest(new { message = "Invalid token" });
+
+        var response = await this._paymentService.CancelPayOrder(responseToken.Value.Item1);
         if (response.Ok) return Ok();
 
         return StatusCode((int)response.Status, new { message = response.Message });

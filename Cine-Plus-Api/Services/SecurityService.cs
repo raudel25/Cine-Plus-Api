@@ -103,7 +103,7 @@ public class SecurityService
 
     public ApiResponse<(int, string, double, long)> DecodingPay(string authHeader)
     {
-        var response = DecodingToken(authHeader);
+        var response = DecodingToken(authHeader, false);
         if (!response.Ok) return response.ConvertApiResponse<(int, string, double, long)>();
 
         var jwtToken = response.Value!;
@@ -114,18 +114,24 @@ public class SecurityService
         var typeClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.TypePayment);
 
         if (idClaim is null || dateClaim is null || typeClaim is null || priceClaim is null)
-            return new ApiResponse<(int, string, double, long)>(HttpStatusCode.Unauthorized, "Unauthorized");
+            return new ApiResponse<(int, string, double, long)>(HttpStatusCode.Unauthorized, "Invalid token");
 
         return new ApiResponse<(int, string, double, long)>((int.Parse(idClaim.Value), typeClaim.Value,
             double.Parse(priceClaim.Value), long.Parse(dateClaim.Value)));
     }
 
-    private ApiResponse<JwtSecurityToken> DecodingToken(string authHeader)
+    private ApiResponse<JwtSecurityToken> DecodingToken(string authHeader, bool bearer = true)
     {
-        if (!authHeader.StartsWith("Bearer "))
-            return new ApiResponse<JwtSecurityToken>(HttpStatusCode.Unauthorized, "Unauthorized");
+        string token;
 
-        var token = authHeader.Substring("Bearer ".Length).Trim();
+        if (bearer)
+        {
+            if (!authHeader.StartsWith("Bearer "))
+                return new ApiResponse<JwtSecurityToken>(HttpStatusCode.Unauthorized, "Unauthorized");
+
+            token = authHeader.Substring("Bearer ".Length).Trim();
+        }
+        else token = authHeader;
 
         var handler = new JwtSecurityTokenHandler();
         return new ApiResponse<JwtSecurityToken>(handler.ReadJwtToken(token));
@@ -149,5 +155,32 @@ public class SecurityService
         return accountCurrent.Level() < account.Level()
             ? new ApiResponse(HttpStatusCode.Unauthorized, "Unauthorized")
             : new ApiResponse();
+    }
+
+    public bool ValidateToken(string token)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = _configuration["Jwt:Issuer"],
+            ValidAudience = _configuration["Jwt:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!))
+        };
+
+        try
+        {
+            tokenHandler.ValidateToken(token, validationParameters, out _);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

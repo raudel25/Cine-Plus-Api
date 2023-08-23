@@ -28,9 +28,9 @@ public class PaymentService : IPaymentService
 
     private readonly CheckOrderService _checkOrderService;
 
-    private const string Payment = "payment";
+    public const string Payment = "payment";
 
-    private const string CancelPayment = "cancel_payment";
+    public const string CancelPayment = "cancel_payment";
 
     public PaymentService(IAvailableSeatCommandHandler availableSeatCommand,
         IAvailableSeatQueryHandler availableSeatQuery, SecurityService securityService,
@@ -62,7 +62,7 @@ public class PaymentService : IPaymentService
         var now = DateTime.UtcNow;
         responsePay.Date = ((DateTimeOffset)now).ToUnixTimeSeconds();
 
-        this._checkOrderService.Add(id.ToString(), id, TimeSpan.FromMinutes(10));
+        this._checkOrderService.Add(id.ToString(), id, TimeSpan.FromMinutes(1));
 
         return responsePay;
     }
