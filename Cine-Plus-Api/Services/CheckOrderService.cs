@@ -1,3 +1,4 @@
+using Cine_Plus_Api.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 using Microsoft.EntityFrameworkCore;
@@ -43,25 +44,26 @@ public class CheckOrderService
     private async Task Cancel(int id)
     {
         var context = GetDb();
-        var payOrder = await context.PayOrders.Include(order => order.PaidSeats)
+        var payOrder = await context.Orders.Include(order => order.Seats)
             .SingleOrDefaultAsync(payOrder => payOrder.Id == id);
-        
+
         if (payOrder is null) return;
 
         if (payOrder.Paid) return;
-        
-        foreach (var seatPaid in payOrder.PaidSeats)
-        {
-            var seat = await context.AvailableSeats.SingleOrDefaultAsync(seat => seat.Id == seatPaid.Id);
-            if (seat is null) return;
-            
-            seat.Available = true;
 
-            context.AvailableSeats.Update(seat);
+        foreach (var seatPaid in payOrder.Seats)
+        {
+            var seat = await context.Seats.SingleOrDefaultAsync(seat => seat.Id == seatPaid.Id);
+            if (seat is null) return;
+
+            seat.State = SeatState.Available;
+            seat.Discounts = new List<Discount>();
+
+            context.Seats.Update(seat);
             await context.SaveChangesAsync();
         }
 
-        context.PayOrders.Remove(payOrder);
+        context.Orders.Remove(payOrder);
         await context.SaveChangesAsync();
     }
 

@@ -6,21 +6,21 @@ namespace Cine_Plus_Api.Queries;
 
 public interface IPayOrderQueryHandler
 {
-    Task<PayOrder?> Handler(int id);
+    Task<Order?> Handler(int id);
 }
 
-public class PayOrderQueryHandler : IPayOrderQueryHandler
+public class OrderQueryHandler : IPayOrderQueryHandler
 {
     private readonly CinePlusContext _context;
 
-    public PayOrderQueryHandler(CinePlusContext context)
+    public OrderQueryHandler(CinePlusContext context)
     {
         this._context = context;
     }
 
-    public async Task<PayOrder?> Handler(int id)
+    public async Task<Order?> Handler(int id)
     {
-        return await this._context.PayOrders.Include(order => order.PaidSeats)
+        return await this._context.Orders.Include(order => order.Seats)
             .SingleOrDefaultAsync(payOrder => payOrder.Id == id);
     }
 }

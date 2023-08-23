@@ -3,6 +3,7 @@ using System;
 using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cine_Plus_Api.Migrations
 {
     [DbContext(typeof(CinePlusContext))]
-    partial class CinePlusContextModelSnapshot : ModelSnapshot
+    [Migration("20230823231059_UpdateSeats")]
+    partial class UpdateSeats
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -261,6 +264,9 @@ namespace Cine_Plus_Api.Migrations
                     b.Property<int>("Number")
                         .HasColumnType("int");
 
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
                     b.Property<double>("Price")
                         .HasColumnType("double");
 
@@ -276,6 +282,8 @@ namespace Cine_Plus_Api.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
 
                     b.HasIndex("ShowMovieId");
 
@@ -362,21 +370,6 @@ namespace Cine_Plus_Api.Migrations
                     b.ToTable("DiscountShowMovie");
                 });
 
-            modelBuilder.Entity("OrderSeat", b =>
-                {
-                    b.Property<int>("OrdersId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SeatsId")
-                        .HasColumnType("int");
-
-                    b.HasKey("OrdersId", "SeatsId");
-
-                    b.HasIndex("SeatsId");
-
-                    b.ToTable("OrderSeat");
-                });
-
             modelBuilder.Entity("ActorMovie", b =>
                 {
                     b.HasOne("Cine_Plus_Api.Models.Actor", null)
@@ -421,6 +414,10 @@ namespace Cine_Plus_Api.Migrations
 
             modelBuilder.Entity("Cine_Plus_Api.Models.Seat", b =>
                 {
+                    b.HasOne("Cine_Plus_Api.Models.Order", null)
+                        .WithMany("Seats")
+                        .HasForeignKey("OrderId");
+
                     b.HasOne("Cine_Plus_Api.Models.ShowMovie", "ShowMovie")
                         .WithMany()
                         .HasForeignKey("ShowMovieId")
@@ -479,21 +476,6 @@ namespace Cine_Plus_Api.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("OrderSeat", b =>
-                {
-                    b.HasOne("Cine_Plus_Api.Models.Order", null)
-                        .WithMany()
-                        .HasForeignKey("OrdersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Cine_Plus_Api.Models.Seat", null)
-                        .WithMany()
-                        .HasForeignKey("SeatsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Cine_Plus_Api.Models.Country", b =>
                 {
                     b.Navigation("Movies");
@@ -507,6 +489,11 @@ namespace Cine_Plus_Api.Migrations
             modelBuilder.Entity("Cine_Plus_Api.Models.Genre", b =>
                 {
                     b.Navigation("Movies");
+                });
+
+            modelBuilder.Entity("Cine_Plus_Api.Models.Order", b =>
+                {
+                    b.Navigation("Seats");
                 });
 #pragma warning restore 612, 618
         }

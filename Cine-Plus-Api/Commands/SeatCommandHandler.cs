@@ -13,20 +13,20 @@ public interface IAvailableSeatCommandHandler
 
     Task Update();
 
-    Task<ApiResponse> Reserve(AvailableSeat seat);
+    Task<ApiResponse> Reserve(Seat seat, ICollection<Discount> discounts);
 
     Task Available(int id);
 
-    Task Remove(IEnumerable<AvailableSeat> seats);
+    Task Remove(IEnumerable<Seat> seats);
 }
 
-public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
+public class SeatCommandHandler : IAvailableSeatCommandHandler
 {
     private readonly CinePlusContext _context;
 
     private readonly IAvailableSeatQueryHandler _availableSeatQuery;
 
-    public AvailableSeatCommandHandler(CinePlusContext context, IAvailableSeatQueryHandler availableSeatQuery)
+    public SeatCommandHandler(CinePlusContext context, IAvailableSeatQueryHandler availableSeatQuery)
     {
         this._context = context;
         this._availableSeatQuery = availableSeatQuery;
@@ -36,8 +36,8 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
     {
         for (var i = 1; i <= showMovie.Cinema.CantSeats; i++)
         {
-            this._context.AvailableSeats.Add(
-                new AvailableSeat { ShowMovieId = showMovie.Id, Number = i, Price = price, Available = true });
+            this._context.Seats.Add(
+                new Seat { ShowMovieId = showMovie.Id, Number = i, Price = price, State = SeatState.Available });
         }
 
         await this._context.SaveChangesAsync();
@@ -45,21 +45,23 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
 
     public async Task Update()
     {
-        var available = await this._context.AvailableSeats.ToListAsync();
+        var available = await this._context.Seats.ToListAsync();
 
         var notAvailable = available.Where(seat => !ShowMovieQueryHandler.AvailableShowMovie(seat.ShowMovie));
 
         await Remove(notAvailable);
     }
 
-    public async Task<ApiResponse> Reserve(AvailableSeat seat)
+    public async Task<ApiResponse> Reserve(Seat seat, ICollection<Discount> discounts)
     {
-        if (!seat.Available) return new ApiResponse(HttpStatusCode.BadRequest, "The seat has been reserved");
+        if (seat.State != SeatState.Available)
+            return new ApiResponse(HttpStatusCode.BadRequest, "The seat has been reserved or bought");
 
         try
         {
-            seat.Available = false;
-            this._context.AvailableSeats.Update(seat);
+            seat.State = SeatState.Reserved;
+            seat.Discounts = discounts;
+            this._context.Seats.Update(seat);
             await this._context.SaveChangesAsync();
 
             return new ApiResponse();
@@ -70,7 +72,7 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
         }
     }
 
-    public async Task Remove(IEnumerable<AvailableSeat> seats)
+    public async Task Remove(IEnumerable<Seat> seats)
     {
         foreach (var seat in seats)
         {
@@ -85,9 +87,10 @@ public class AvailableSeatCommandHandler : IAvailableSeatCommandHandler
         var seat = await this._availableSeatQuery.Handler(id);
         if (seat is null) return;
 
-        seat.Available = true;
+        seat.State = SeatState.Available;
+        seat.Discounts = new List<Discount>();
 
-        this._context.AvailableSeats.Update(seat);
+        this._context.Seats.Update(seat);
         await this._context.SaveChangesAsync();
     }
 }

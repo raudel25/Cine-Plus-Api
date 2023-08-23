@@ -15,11 +15,9 @@ public class CinePlusContext : DbContext
 
     public DbSet<Movie> Movies { get; set; } = null!;
 
-    public DbSet<AvailableSeat> AvailableSeats { get; set; } = null!;
-
-    public DbSet<PaidSeat> PaidSeats { get; set; } = null!;
-
-    public DbSet<PayOrder> PayOrders { get; set; } = null!;
+    public DbSet<Seat> Seats { get; set; } = null!;
+    
+    public DbSet<Order> Orders { get; set; } = null!;
 
     public DbSet<Cinema> Cinemas { get; set; } = null!;
 
@@ -39,7 +37,7 @@ public class CinePlusContext : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AvailableSeat>()
+        modelBuilder.Entity<Seat>()
             .Property(a => a.RowVersion)
             .IsConcurrencyToken()
             .ValueGeneratedOnAddOrUpdate();

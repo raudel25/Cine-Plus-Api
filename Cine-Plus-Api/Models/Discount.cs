@@ -18,4 +18,6 @@ public class Discount
     [Required] public double DiscountPercent { get; set; }
 
     public ICollection<ShowMovie> ShowMovies { get; set; } = null!;
+
+    public ICollection<Seat> Seats { get; set; } = null!;
 }

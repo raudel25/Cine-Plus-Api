@@ -53,7 +53,7 @@ public class PaymentService : IPaymentService
 
         if (validSeats.Count == 0) return responsePay;
 
-        var createPayOrder = new CreatePayOrder { Paid = false, PaidSeats = validSeats, Price = price };
+        var createPayOrder = new CreateOrder { Seats = validSeats, Price = price };
         var id = await this._payOrderCommand.Handler(createPayOrder);
 
         var token = this._securityService.JwtPay(id, Payment, price, DateTime.UtcNow.AddMinutes(10));
@@ -62,7 +62,7 @@ public class PaymentService : IPaymentService
         var now = DateTime.UtcNow;
         responsePay.Date = ((DateTimeOffset)now).ToUnixTimeSeconds();
 
-        this._checkOrderService.Add(id.ToString(), id, TimeSpan.FromMinutes(1));
+        this._checkOrderService.Add(id.ToString(), id, TimeSpan.FromMinutes(10));
 
         return responsePay;
     }
@@ -71,24 +71,22 @@ public class PaymentService : IPaymentService
     {
         this._checkOrderService.Remove(id.ToString());
 
-        var payOrder = await this._payOrderQuery.Handler(id);
-        if (payOrder is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found pay order");
+        var order = await this._payOrderQuery.Handler(id);
+        if (order is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found pay order");
 
-        if (payOrder.Paid) return new ApiResponse(HttpStatusCode.BadRequest, "The pay order has been paid");
-
-        foreach (var seat in payOrder.PaidSeats)
+        foreach (var seat in order.Seats)
         {
             await this._availableSeatCommand.Available(seat.Id);
         }
 
-        await this._payOrderCommand.Handler(payOrder);
+        await this._payOrderCommand.Handler(order);
 
         return new ApiResponse();
     }
 
-    private async Task<(List<PaidSeat>, List<ResponseSeatOrder>, double)> ProcessSeats(GeneratePayOrder request)
+    private async Task<(List<Seat>, List<ResponseSeatOrder>, double)> ProcessSeats(GeneratePayOrder request)
     {
-        var validSeats = new List<PaidSeat>();
+        var validSeats = new List<Seat>();
 
         var seatsResponse = new List<ResponseSeatOrder>();
 
@@ -110,13 +108,13 @@ public class PaymentService : IPaymentService
         return (validSeats, seatsResponse, price);
     }
 
-    private async Task<ApiResponse<PaidSeat>> ProcessSeat(GenerateSeatOrder seatOrder)
+    private async Task<ApiResponse<Seat>> ProcessSeat(GenerateSeatOrder seatOrder)
     {
         if (seatOrder.Discounts.Distinct().ToList().Count != seatOrder.Discounts.Count)
-            return new ApiResponse<PaidSeat>(HttpStatusCode.BadRequest, "The show movie contains repeated discounts");
+            return new ApiResponse<Seat>(HttpStatusCode.BadRequest, "The show movie contains repeated discounts");
 
         var seat = await this._availableSeatQuery.Handler(seatOrder.Id);
-        if (seat is null) return new ApiResponse<PaidSeat>(HttpStatusCode.NotFound, "Not found seat");
+        if (seat is null) return new ApiResponse<Seat>(HttpStatusCode.NotFound, "Not found seat");
 
         var discounts = seat.ShowMovie.Discounts;
 
@@ -124,20 +122,16 @@ public class PaymentService : IPaymentService
         {
             var discount = discounts.SingleOrDefault(discount => discount.Id == discountId);
             if (discount is null)
-                return new ApiResponse<PaidSeat>(HttpStatusCode.NotFound, "Not found discount in show movie");
+                return new ApiResponse<Seat>(HttpStatusCode.NotFound, "Not found discount in show movie");
         }
 
-        var response = await this._availableSeatCommand.Reserve(seat);
-        if (!response.Ok) return response.ConvertApiResponse<PaidSeat>();
+        var response = await this._availableSeatCommand.Reserve(seat, discounts);
+        if (!response.Ok) return response.ConvertApiResponse<Seat>();
 
-        return new ApiResponse<PaidSeat>(new PaidSeat
-        {
-            Id = seat.Id, Number = seat.Number, ShowMovieId = seat.ShowMovieId, Price = seat.Price,
-            Discounts = discounts
-        });
+        return new ApiResponse<Seat>(seat);
     }
 
-    private static double CalculatePrice(PaidSeat seat)
+    private static double CalculatePrice(Seat seat)
     {
         var d = seat.Discounts.Select(discount => discount.DiscountPercent).Sum();
         return (100 - d) * seat.Price / 100;

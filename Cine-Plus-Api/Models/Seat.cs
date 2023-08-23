@@ -3,7 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Cine_Plus_Api.Models;
 
-public class AvailableSeat
+public enum SeatState
+{
+    Available,
+    Reserved,
+    Bought
+}
+
+public class Seat
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -13,11 +20,15 @@ public class AvailableSeat
 
     [Required] public int Number { get; set; }
 
-    [Required] public bool Available { get; set; }
+    [Required] public SeatState State { get; set; }
 
     public DateTime RowVersion { get; set; }
 
     [ForeignKey("ShowMovie")] public int ShowMovieId { get; set; }
 
     public ShowMovie ShowMovie { get; set; } = null!;
+
+    public ICollection<Order> Orders { get; set; } = null!;
+
+    public ICollection<Discount> Discounts { get; set; } = null!;
 }

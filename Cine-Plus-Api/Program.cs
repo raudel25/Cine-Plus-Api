@@ -83,12 +83,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICinemaCommandHandler, CinemaCommandHandler>();
         services.AddScoped<IDiscountQueryHandler, DiscountQueryHandler>();
         services.AddScoped<IDiscountCommandHandler, DiscountCommandHandler>();
-        services.AddScoped<IAvailableSeatCommandHandler, AvailableSeatCommandHandler>();
-        services.AddScoped<IAvailableSeatQueryHandler, AvailableSeatQueryHandler>();
+        services.AddScoped<IAvailableSeatCommandHandler, SeatCommandHandler>();
+        services.AddScoped<IAvailableSeatQueryHandler, SeatQueryHandler>();
         services.AddScoped<IAuthCommandHandler, AuthCommandHandler>();
         services.AddScoped<IAuthQueryHandler, AuthQueryHandler>();
-        services.AddScoped<IPayOrderCommandHandler, PayOrderCommandHandler>();
-        services.AddScoped<IPayOrderQueryHandler, PayOrderQueryHandler>();
+        services.AddScoped<IPayOrderCommandHandler, OrderCommandHandler>();
+        services.AddScoped<IPayOrderQueryHandler, OrderQueryHandler>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<SecurityService>();
         services.AddSingleton<CheckOrderService>();
