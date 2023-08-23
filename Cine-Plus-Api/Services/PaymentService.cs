@@ -56,7 +56,7 @@ public class PaymentService : IPaymentService
         var createPayOrder = new CreatePayOrder { Paid = false, PaidSeats = validSeats, Price = price };
         var id = await this._payOrderCommand.Handler(createPayOrder);
 
-        var token = this._securityService.JwtPay(id, Payment, DateTime.UtcNow.AddMinutes(10));
+        var token = this._securityService.JwtPay(id, Payment, price, DateTime.UtcNow.AddMinutes(10));
         responsePay.Token = token;
 
         var now = DateTime.UtcNow;

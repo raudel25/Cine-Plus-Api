@@ -15,6 +15,7 @@ public static class MyClaims
     public const string Role = "role";
     public const string Date = "date";
     public const string TypePayment = "type_payment";
+    public const string Price = "price";
 }
 
 public class SecurityService
@@ -40,13 +41,14 @@ public class SecurityService
         return Jwt(expires, claims);
     }
 
-    public string JwtPay(int id, string type, DateTime expires)
+    public string JwtPay(int id, string type, double price, DateTime expires)
     {
         var now = DateTime.UtcNow;
         var claims = new[]
         {
             new Claim(MyClaims.Id, id.ToString()),
             new Claim(MyClaims.TypePayment, type),
+            new Claim(MyClaims.Price, $"{price}"),
             new Claim(MyClaims.Date, ((DateTimeOffset)now).ToUnixTimeSeconds().ToString())
         };
 
@@ -99,22 +101,23 @@ public class SecurityService
         }
     }
 
-    public ApiResponse<(int, string, long)> DecodingPay(string authHeader)
+    public ApiResponse<(int, string, double, long)> DecodingPay(string authHeader)
     {
         var response = DecodingToken(authHeader);
-        if (!response.Ok) return response.ConvertApiResponse<(int, string, long)>();
+        if (!response.Ok) return response.ConvertApiResponse<(int, string, double, long)>();
 
         var jwtToken = response.Value!;
 
         var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Id);
         var dateClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Date);
+        var priceClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.Price);
         var typeClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == MyClaims.TypePayment);
 
-        if (idClaim is null || dateClaim is null || typeClaim is null)
-            return new ApiResponse<(int, string, long)>(HttpStatusCode.Unauthorized, "Unauthorized");
+        if (idClaim is null || dateClaim is null || typeClaim is null || priceClaim is null)
+            return new ApiResponse<(int, string, double, long)>(HttpStatusCode.Unauthorized, "Unauthorized");
 
-        return new ApiResponse<(int, string, long)>((int.Parse(idClaim.Value),typeClaim.Value,
-            long.Parse(dateClaim.Value)));
+        return new ApiResponse<(int, string, double, long)>((int.Parse(idClaim.Value), typeClaim.Value,
+            double.Parse(priceClaim.Value), long.Parse(dateClaim.Value)));
     }
 
     private ApiResponse<JwtSecurityToken> DecodingToken(string authHeader)
