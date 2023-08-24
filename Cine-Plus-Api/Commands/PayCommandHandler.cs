@@ -6,10 +6,10 @@ namespace Cine_Plus_Api.Commands;
 
 public interface IPayCommandHandler
 {
-    Task CreditCard(int id,PayCreditCard request);
+    Task CreditCard(int id, PayCreditCard request);
 }
 
-public class PayCommandHandler
+public class PayCommandHandler : IPayCommandHandler
 {
     private readonly CinePlusContext _context;
 
@@ -17,8 +17,8 @@ public class PayCommandHandler
     {
         this._context = context;
     }
-    
-    public async Task CreditCard(int id,PayCreditCard request)
+
+    public async Task CreditCard(int id, PayCreditCard request)
     {
         var creditCard = new CreditCard { Card = request.CreditCard, OrderId = id };
 

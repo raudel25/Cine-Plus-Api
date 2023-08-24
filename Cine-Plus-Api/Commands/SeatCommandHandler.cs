@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cine_Plus_Api.Commands;
 
-public interface IAvailableSeatCommandHandler
+public interface ISeatCommandHandler
 {
     Task Create(ShowMovie showMovie, double price);
 
@@ -17,19 +17,19 @@ public interface IAvailableSeatCommandHandler
 
     Task Available(int id);
 
-    Task Remove(IEnumerable<Seat> seats);
+    Task Bought(Seat seat);
 }
 
-public class SeatCommandHandler : IAvailableSeatCommandHandler
+public class SeatCommandHandler : ISeatCommandHandler
 {
     private readonly CinePlusContext _context;
 
-    private readonly IAvailableSeatQueryHandler _availableSeatQuery;
+    private readonly ISeatQueryHandler _seatQuery;
 
-    public SeatCommandHandler(CinePlusContext context, IAvailableSeatQueryHandler availableSeatQuery)
+    public SeatCommandHandler(CinePlusContext context, ISeatQueryHandler seatQuery)
     {
         this._context = context;
-        this._availableSeatQuery = availableSeatQuery;
+        this._seatQuery = seatQuery;
     }
 
     public async Task Create(ShowMovie showMovie, double price)
@@ -84,13 +84,21 @@ public class SeatCommandHandler : IAvailableSeatCommandHandler
 
     public async Task Available(int id)
     {
-        var seat = await this._availableSeatQuery.Handler(id);
+        var seat = await this._seatQuery.HandlerDiscounts(id);
         if (seat is null) return;
 
         seat.State = SeatState.Available;
         seat.Discounts = new List<Discount>();
 
         this._context.Seats.Update(seat);
+        await this._context.SaveChangesAsync();
+    }
+
+    public async Task Bought(Seat seat)
+    {
+        seat.State = SeatState.Bought;
+
+        this._context.Update(seat);
         await this._context.SaveChangesAsync();
     }
 }

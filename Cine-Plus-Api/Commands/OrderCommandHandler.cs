@@ -4,7 +4,7 @@ using Cine_Plus_Api.Services;
 
 namespace Cine_Plus_Api.Commands;
 
-public interface IPayOrderCommandHandler
+public interface IOrderCommandHandler
 {
     Task<int> Create(CreateOrder request);
 
@@ -13,7 +13,7 @@ public interface IPayOrderCommandHandler
     Task Pay(Order order);
 }
 
-public class OrderCommandHandler : IPayOrderCommandHandler
+public class OrderCommandHandler : IOrderCommandHandler
 {
     private readonly CinePlusContext _context;
 

@@ -19,13 +19,13 @@ public class PaymentController : ControllerBase
         this._securityService = securityService;
     }
 
-    [HttpPost]
+    [HttpPost("Generate")]
     public async Task<ResponseGeneratePayOrder> Post(GeneratePayOrder request)
     {
         return await this._paymentService.GenerateOrder(request);
     }
 
-    [HttpPost]
+    [HttpPost("Pay")]
     public async Task<ActionResult<IEnumerable<ResponsePaidSeat>>> Post(PayCreditCard request)
     {
         if (!this._securityService.ValidateToken(request.Token)) return BadRequest(new { message = "Invalid token" });

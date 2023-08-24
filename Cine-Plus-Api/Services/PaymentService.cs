@@ -18,15 +18,15 @@ public interface IPaymentService
 
 public class PaymentService : IPaymentService
 {
-    private readonly IAvailableSeatCommandHandler _availableSeatCommand;
+    private readonly ISeatCommandHandler _seatCommand;
 
-    private readonly IAvailableSeatQueryHandler _availableSeatQuery;
+    private readonly ISeatQueryHandler _seatQuery;
 
-    private readonly IPayOrderCommandHandler _orderCommand;
+    private readonly IOrderCommandHandler _orderCommand;
 
     private readonly SecurityService _securityService;
 
-    private readonly IPayOrderQueryHandler _payOrderQuery;
+    private readonly IOrderQueryHandler _orderQuery;
 
     private readonly CheckOrderService _checkOrderService;
 
@@ -36,16 +36,16 @@ public class PaymentService : IPaymentService
 
     public const string CancelPayment = "cancel_payment";
 
-    public PaymentService(IAvailableSeatCommandHandler availableSeatCommand,
-        IAvailableSeatQueryHandler availableSeatQuery, SecurityService securityService,
-        IPayOrderCommandHandler orderCommand, IPayOrderQueryHandler payOrderQuery,
+    public PaymentService(ISeatCommandHandler seatCommand,
+        ISeatQueryHandler seatQuery, SecurityService securityService,
+        IOrderCommandHandler orderCommand, IOrderQueryHandler orderQuery,
         CheckOrderService checkOrderService, IPayCommandHandler payCommand)
     {
-        this._availableSeatCommand = availableSeatCommand;
-        this._availableSeatQuery = availableSeatQuery;
+        this._seatCommand = seatCommand;
+        this._seatQuery = seatQuery;
         this._securityService = securityService;
         this._orderCommand = orderCommand;
-        this._payOrderQuery = payOrderQuery;
+        this._orderQuery = orderQuery;
         this._checkOrderService = checkOrderService;
         this._payCommand = payCommand;
     }
@@ -78,11 +78,12 @@ public class PaymentService : IPaymentService
         if (!response.Ok) return response.ConvertApiResponse<IEnumerable<ResponsePaidSeat>>();
         var order = response.Value!;
 
-        if (Math.Abs(order.Price - request.Amount) < 0.009)
+        if (Math.Abs(order.Price - request.Amount) > 0.009)
             return new ApiResponse<IEnumerable<ResponsePaidSeat>>(HttpStatusCode.BadRequest, "The money paid is wrong");
 
         await this._orderCommand.Pay(order);
         await this._payCommand.CreditCard(id, request);
+        await PaidSeats(order);
 
         return new ApiResponse<IEnumerable<ResponsePaidSeat>>(await ResponsePaidSeats(order));
     }
@@ -95,7 +96,7 @@ public class PaymentService : IPaymentService
 
         foreach (var seat in order.Seats)
         {
-            await this._availableSeatCommand.Available(seat.Id);
+            await this._seatCommand.Available(seat.Id);
         }
 
         await this._orderCommand.Remove(order);
@@ -132,7 +133,7 @@ public class PaymentService : IPaymentService
         if (seatOrder.Discounts.Distinct().ToList().Count != seatOrder.Discounts.Count)
             return new ApiResponse<Seat>(HttpStatusCode.BadRequest, "The show movie contains repeated discounts");
 
-        var seat = await this._availableSeatQuery.HandlerDiscounts(seatOrder.Id);
+        var seat = await this._seatQuery.HandlerShowMovieDiscounts(seatOrder.Id);
         if (seat is null) return new ApiResponse<Seat>(HttpStatusCode.NotFound, "Not found seat");
 
         var discounts = seat.ShowMovie.Discounts;
@@ -144,7 +145,7 @@ public class PaymentService : IPaymentService
                 return new ApiResponse<Seat>(HttpStatusCode.NotFound, "Not found discount in show movie");
         }
 
-        var response = await this._availableSeatCommand.Reserve(seat, discounts);
+        var response = await this._seatCommand.Reserve(seat, discounts);
         if (!response.Ok) return response.ConvertApiResponse<Seat>();
 
         return new ApiResponse<Seat>(seat);
@@ -158,7 +159,7 @@ public class PaymentService : IPaymentService
 
     private async Task<ApiResponse<Order>> CheckFindOrder(int id)
     {
-        var order = await this._payOrderQuery.Handler(id);
+        var order = await this._orderQuery.HandlerSeats(id);
         if (order is null) return new ApiResponse<Order>(HttpStatusCode.NotFound, "Not found pay order");
 
         if (order.Paid) return new ApiResponse<Order>(HttpStatusCode.BadRequest, "The order has been paid");
@@ -174,20 +175,44 @@ public class PaymentService : IPaymentService
 
         foreach (var seat in order.Seats)
         {
+            var token = await CancelPaidToken(seat.Id);
             list.Add(new ResponsePaidSeat
-                { Id = seat.Id, Token = await CancelPaidToken(seat.Id) });
+            {
+                Id = seat.Id, Token = token,
+                Description = token is null
+                    ? "This pay has not been canceled"
+                    : "This payment can be canceled up to two hours before of the show movie"
+            });
         }
 
         return list;
     }
 
-    private async Task<string> CancelPaidToken(int id)
+    private async Task<string?> CancelPaidToken(int id)
     {
-        var seat = await this._availableSeatQuery.HandlerShowMovieDiscounts(id);
+        var seatDiscounts = await this._seatQuery.HandlerDiscounts(id);
 
-        var date = new DateTime(seat!.ShowMovie.Date);
+        var seatShowMovie = await this._seatQuery.HandlerShowMovie(id);
 
-        return this._securityService.JwtPay(id, CancelPayment, CalculatePrice(seat),
-            date.Subtract(TimeSpan.FromHours(2)));
+        var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seatShowMovie!.ShowMovie.Date);
+        var date = dateTimeOffset.DateTime;
+
+        var expire = date.Subtract(TimeSpan.FromHours(2));
+
+        var now = DateTime.UtcNow;
+        var possible = now <= expire;
+
+        return possible
+            ? this._securityService.JwtPay(id, CancelPayment, CalculatePrice(seatDiscounts!),
+                expire)
+            : null;
+    }
+
+    private async Task PaidSeats(Order order)
+    {
+        foreach (var seat in order.Seats)
+        {
+            await this._seatCommand.Bought(seat);
+        }
     }
 }

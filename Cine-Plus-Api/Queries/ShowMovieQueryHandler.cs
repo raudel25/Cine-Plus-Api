@@ -63,8 +63,10 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
 
     public static bool AvailableShowMovie(ShowMovie showMovie)
     {
-        var now = DateTime.Now;
-        return ((DateTimeOffset)now).ToUnixTimeSeconds() <= showMovie.Date;
+        var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(showMovie.Date);
+        var date = dateTimeOffset.DateTime;
+
+        return DateTime.UtcNow <= date;
     }
 
     public async Task<ICollection<ShowMovie>> AvailableMovie(int id)

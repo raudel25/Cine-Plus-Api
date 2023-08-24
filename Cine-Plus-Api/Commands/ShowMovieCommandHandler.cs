@@ -20,15 +20,15 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
 
     private readonly IDiscountQueryHandler _discountQuery;
 
-    private readonly IAvailableSeatCommandHandler _availableSeatsCommand;
+    private readonly ISeatCommandHandler _seatsCommand;
 
     public ShowMovieCommandHandler(CinePlusContext context, IShowMovieQueryHandler showMovieQuery,
-        IDiscountQueryHandler discountQuery, IAvailableSeatCommandHandler availableSeatCommand)
+        IDiscountQueryHandler discountQuery, ISeatCommandHandler availableSeatCommand)
     {
         this._context = context;
         this._showMovieQuery = showMovieQuery;
         this._discountQuery = discountQuery;
-        this._availableSeatsCommand = availableSeatCommand;
+        this._seatsCommand = availableSeatCommand;
     }
 
     private async Task<ApiResponse> AddDiscounts(ShowMovie showMovie, ICollection<int> discounts)
@@ -66,7 +66,7 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
         this._context.ShowMovies.Add(showMovie);
         await this._context.SaveChangesAsync();
 
-        await this._availableSeatsCommand.Create(showMovie, request.Price);
+        await this._seatsCommand.Create(showMovie, request.Price);
 
         return new ApiResponse<int>(showMovie.Id);
     }

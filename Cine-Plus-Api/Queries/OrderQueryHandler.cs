@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cine_Plus_Api.Queries;
 
-public interface IPayOrderQueryHandler
+public interface IOrderQueryHandler
 {
-    Task<Order?> Handler(int id);
+    Task<Order?> HandlerSeats(int id);
 }
 
-public class OrderQueryHandler : IPayOrderQueryHandler
+public class OrderQueryHandler : IOrderQueryHandler
 {
     private readonly CinePlusContext _context;
 
@@ -18,7 +18,7 @@ public class OrderQueryHandler : IPayOrderQueryHandler
         this._context = context;
     }
 
-    public async Task<Order?> Handler(int id)
+    public async Task<Order?> HandlerSeats(int id)
     {
         return await this._context.Orders.Include(order => order.Seats)
             .SingleOrDefaultAsync(payOrder => payOrder.Id == id);
