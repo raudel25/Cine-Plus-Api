@@ -57,7 +57,8 @@ public class PaymentService : IPaymentService
         var (responsePay, order) = await GeneratePayOrderP(request);
         if (order is null) return responsePay;
 
-        var token = this._securityService.JwtPay(order.Id, Payment, responsePay.Price, DateTime.UtcNow.AddMinutes(10));
+        var token = this._securityService.JwtPay(order.Id, Payment, responsePay.Price, responsePay.PricePoints,
+            responsePay.AddPoints, DateTime.UtcNow.AddMinutes(10));
         responsePay.Token = token;
 
         var now = DateTime.UtcNow;
@@ -112,28 +113,22 @@ public class PaymentService : IPaymentService
         return new ApiResponse();
     }
 
-    private async Task<(List<Seat>, List<ResponseSeatOrder>, double)> ProcessSeats(GeneratePayOrder request)
+    private async Task<(List<Seat>, List<ResponseSeatOrder>)> ProcessSeats(GeneratePayOrder request)
     {
         var validSeats = new List<Seat>();
-
         var seatsResponse = new List<ResponseSeatOrder>();
-
-        double price = 0;
 
         foreach (var seat in request.Seats)
         {
             var response = await ProcessSeat(seat);
 
             if (response.Ok)
-            {
                 validSeats.Add(response.Value!);
-                price += CalculatePrice(response.Value!);
-            }
 
             seatsResponse.Add(new ResponseSeatOrder { Id = seat.Id, Message = response.Ok ? "Ok" : response.Message! });
         }
 
-        return (validSeats, seatsResponse, price);
+        return (validSeats, seatsResponse);
     }
 
     private async Task<ApiResponse<Seat>> ProcessSeat(GenerateSeatOrder seatOrder)
@@ -163,6 +158,12 @@ public class PaymentService : IPaymentService
     {
         var d = seat.Discounts.Select(discount => discount.DiscountPercent).Sum();
         return (100 - d) * seat.Price / 100;
+    }
+
+    private static int CalculatePricePoints(Seat seat)
+    {
+        var d = seat.Discounts.Select(discount => discount.DiscountPercent).Sum();
+        return (int)((100 - d) * seat.PricePoints / 100);
     }
 
     private async Task<ApiResponse<Order>> CheckFindOrder(int id)
@@ -212,6 +213,7 @@ public class PaymentService : IPaymentService
 
         return possible
             ? this._securityService.JwtPay(id, CancelPayment, CalculatePrice(seatDiscounts!),
+                CalculatePricePoints(seatDiscounts!), seatDiscounts!.AddPoints,
                 expire)
             : null;
     }
@@ -226,13 +228,19 @@ public class PaymentService : IPaymentService
 
     private async Task<(ResponseGeneratePayOrder, Order?)> GeneratePayOrderP(GeneratePayOrder request)
     {
-        var (validSeats, seatsResponse, price) = await ProcessSeats(request);
+        var (validSeats, seatsResponse) = await ProcessSeats(request);
 
-        var responsePay = new ResponseGeneratePayOrder { Seats = seatsResponse, Price = price };
+        var price = validSeats.Select(CalculatePrice).Sum();
+        var pricePoints = validSeats.Select(CalculatePricePoints).Sum();
+        var addPoints = validSeats.Select(seat => seat.AddPoints).Sum();
+
+        var responsePay = new ResponseGeneratePayOrder
+            { Seats = seatsResponse, Price = price, PricePoints = pricePoints, AddPoints = addPoints };
 
         if (validSeats.Count == 0) return (responsePay, null);
 
-        var createPayOrder = new CreateOrder { Seats = validSeats, Price = price };
+        var createPayOrder = new CreateOrder
+            { Seats = validSeats, Price = price, PricePoints = pricePoints, AddPoints = addPoints };
         var order = await this._orderCommand.Create(createPayOrder);
 
         return (responsePay, order);

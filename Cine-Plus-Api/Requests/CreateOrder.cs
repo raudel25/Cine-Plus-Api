@@ -6,7 +6,11 @@ public class CreateOrder
 {
     public double Price { get; set; }
 
+    public int PricePoints { get; set; }
+
+    public int AddPoints { get; set; }
+
     public ICollection<Seat> Seats { get; set; } = null!;
 
-    public Order Order() => new() { Price = this.Price, Seats = this.Seats};
+    public Order Order() => new() { Price = this.Price, Seats = this.Seats };
 }

@@ -11,6 +11,10 @@ public class Order
 
     [Required] public double Price { get; set; }
 
+    [Required] public int PricePoints { get; set; }
+
+    [Required] public int AddPoints { get; set; }
+
     [Required] public bool Paid { get; set; }
 
     public ICollection<Seat> Seats { get; set; } = null!;

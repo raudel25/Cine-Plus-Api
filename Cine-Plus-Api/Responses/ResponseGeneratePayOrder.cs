@@ -10,6 +10,10 @@ public class ResponseGeneratePayOrder
 
     public double Price { get; set; }
     
+    public int PricePoints { get; set; }
+    
+    public int AddPoints { get; set; }
+    
     public long Date { get; set; }
 
     public ICollection<ResponseSeatOrder> Seats { get; set; } = null!;

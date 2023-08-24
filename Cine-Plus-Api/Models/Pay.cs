@@ -35,8 +35,12 @@ public class Ticket : Pay
     public Employ Employ { get; set; } = null!;
 }
 
-public class TicketPointsUser : PointsUser
+public class TicketPointsUser : Pay
 {
+    [ForeignKey("User")] public int UserId { get; set; }
+
+    public User User { get; set; } = null!;
+
     [ForeignKey("Employ")] public int EmployId { get; set; }
 
     public Employ Employ { get; set; } = null!;

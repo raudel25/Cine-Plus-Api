@@ -16,6 +16,8 @@ public static class MyClaims
     public const string Date = "date";
     public const string TypePayment = "type_payment";
     public const string Price = "price";
+    public const string PricePoints = "price_points";
+    public const string AddPoints = "add_points";
 }
 
 public class SecurityService
@@ -41,7 +43,7 @@ public class SecurityService
         return Jwt(expires, claims);
     }
 
-    public string JwtPay(int id, string type, double price, DateTime expires)
+    public string JwtPay(int id, string type, double price,int pricePoints,int addPoints, DateTime expires)
     {
         var now = DateTime.UtcNow;
         var claims = new[]
@@ -49,6 +51,8 @@ public class SecurityService
             new Claim(MyClaims.Id, id.ToString()),
             new Claim(MyClaims.TypePayment, type),
             new Claim(MyClaims.Price, $"{price}"),
+            new Claim(MyClaims.PricePoints,pricePoints.ToString()),
+            new Claim(MyClaims.AddPoints,addPoints.ToString()),
             new Claim(MyClaims.Date, ((DateTimeOffset)now).ToUnixTimeSeconds().ToString())
         };
 

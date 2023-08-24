@@ -1,6 +1,7 @@
 using System.Net;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Queries;
+using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Responses;
 using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,9 @@ namespace Cine_Plus_Api.Commands;
 
 public interface ISeatCommandHandler
 {
-    Task Create(ShowMovie showMovie, double price, int pricePoints, int addPoints);
+    Task Create(CreateSeat request);
 
-    Task Update();
+    Task UpdateSeats();
 
     Task<ApiResponse> Reserve(Seat seat, ICollection<Discount> discounts);
 
@@ -32,22 +33,17 @@ public class SeatCommandHandler : ISeatCommandHandler
         this._seatQuery = seatQuery;
     }
 
-    public async Task Create(ShowMovie showMovie, double price, int pricePoints, int addPoints)
+    public async Task Create(CreateSeat request)
     {
-        for (var i = 1; i <= showMovie.Cinema.CantSeats; i++)
+        for (var i = 1; i <= request.ShowMovie.Cinema.CantSeats; i++)
         {
-            this._context.Seats.Add(
-                new Seat
-                {
-                    ShowMovieId = showMovie.Id, Number = i, Price = price, PricePoints = pricePoints,
-                    AddPoints = addPoints, State = SeatState.Available
-                });
+            this._context.Seats.Add(request.Seat(i));
         }
 
         await this._context.SaveChangesAsync();
     }
 
-    public async Task Update()
+    public async Task UpdateSeats()
     {
         var available = await this._context.Seats.ToListAsync();
 

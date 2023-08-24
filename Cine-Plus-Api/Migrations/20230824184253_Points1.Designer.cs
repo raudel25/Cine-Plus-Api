@@ -3,6 +3,7 @@ using System;
 using Cine_Plus_Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cine_Plus_Api.Migrations
 {
     [DbContext(typeof(CinePlusContext))]
-    partial class CinePlusContextModelSnapshot : ModelSnapshot
+    [Migration("20230824184253_Points1")]
+    partial class Points1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -455,25 +458,22 @@ namespace Cine_Plus_Api.Migrations
 
             modelBuilder.Entity("Cine_Plus_Api.Models.TicketPointsUser", b =>
                 {
-                    b.HasBaseType("Cine_Plus_Api.Models.Pay");
+                    b.HasBaseType("Cine_Plus_Api.Models.PointsUser");
 
                     b.Property<int>("EmployId")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId1")
                         .HasColumnType("int");
 
                     b.HasIndex("EmployId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Pays", t =>
                         {
                             t.Property("EmployId")
                                 .HasColumnName("TicketPointsUser_EmployId");
-
-                            t.Property("UserId")
-                                .HasColumnName("TicketPointsUser_UserId");
                         });
 
                     b.HasDiscriminator().HasValue("TicketPointsUser");
@@ -637,15 +637,11 @@ namespace Cine_Plus_Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Cine_Plus_Api.Models.User", "User")
+                    b.HasOne("Cine_Plus_Api.Models.User", null)
                         .WithMany("TicketPointsUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId1");
 
                     b.Navigation("Employ");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Cine_Plus_Api.Models.Country", b =>

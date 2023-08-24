@@ -66,7 +66,11 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
         this._context.ShowMovies.Add(showMovie);
         await this._context.SaveChangesAsync();
 
-        await this._seatsCommand.Create(showMovie, request.Price,request.PricePoints,request.AddPoints);
+        await this._seatsCommand.Create(new CreateSeat
+        {
+            ShowMovie = showMovie, Price = request.Price, PricePoints = request.PricePoints,
+            AddPoints = request.AddPoints
+        });
 
         return new ApiResponse<int>(showMovie.Id);
     }
