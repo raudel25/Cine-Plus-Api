@@ -21,6 +21,12 @@ public class CinePlusContext : DbContext
 
     public DbSet<Pay> Pays { get; set; } = null!;
 
+    public DbSet<CreditCard> CreditCards { get; set; } = null!;
+
+    public DbSet<Ticket> Tickets { get; set; } = null!;
+
+    public DbSet<PointsUser> PointsUsers { get; set; } = null!;
+
     public DbSet<Cinema> Cinemas { get; set; } = null!;
 
     public DbSet<Discount> Discounts { get; set; } = null!;

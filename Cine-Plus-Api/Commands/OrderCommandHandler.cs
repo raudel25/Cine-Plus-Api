@@ -6,9 +6,11 @@ namespace Cine_Plus_Api.Commands;
 
 public interface IPayOrderCommandHandler
 {
-    Task<int> Handler(CreateOrder request);
+    Task<int> Create(CreateOrder request);
 
-    Task Handler(Order order);
+    Task Remove(Order order);
+
+    Task Pay(Order order);
 }
 
 public class OrderCommandHandler : IPayOrderCommandHandler
@@ -20,7 +22,7 @@ public class OrderCommandHandler : IPayOrderCommandHandler
         this._context = context;
     }
 
-    public async Task<int> Handler(CreateOrder request)
+    public async Task<int> Create(CreateOrder request)
     {
         var order = request.Order();
 
@@ -30,9 +32,16 @@ public class OrderCommandHandler : IPayOrderCommandHandler
         return order.Id;
     }
 
-    public async Task Handler(Order order)
+    public async Task Remove(Order order)
     {
         this._context.Orders.Remove(order);
+        await this._context.SaveChangesAsync();
+    }
+
+    public async Task Pay(Order order)
+    {
+        order.Paid = true;
+        this._context.Orders.Update(order);
         await this._context.SaveChangesAsync();
     }
 }

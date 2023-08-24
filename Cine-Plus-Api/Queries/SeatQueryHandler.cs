@@ -8,7 +8,9 @@ public interface IAvailableSeatQueryHandler
 {
     Task<ICollection<Seat>> Handler();
 
-    Task<Seat?> Handler(int id);
+    Task<Seat?> HandlerDiscounts(int id);
+
+    Task<Seat?> HandlerShowMovieDiscounts(int id);
 }
 
 public class SeatQueryHandler : IAvailableSeatQueryHandler
@@ -25,9 +27,15 @@ public class SeatQueryHandler : IAvailableSeatQueryHandler
         return await this._context.Seats.ToListAsync();
     }
 
-    public async Task<Seat?> Handler(int id)
+    public async Task<Seat?> HandlerDiscounts(int id)
     {
         return await this._context.Seats.Include(seat => seat.ShowMovie.Discounts)
+            .SingleOrDefaultAsync(seat => seat.Id == id);
+    }
+
+    public async Task<Seat?> HandlerShowMovieDiscounts(int id)
+    {
+        return await this._context.Seats.Include(seat => seat.ShowMovie).Include(seat => seat.ShowMovie.Discounts)
             .SingleOrDefaultAsync(seat => seat.Id == id);
     }
 }

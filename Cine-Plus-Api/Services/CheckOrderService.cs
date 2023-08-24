@@ -44,14 +44,14 @@ public class CheckOrderService
     private async Task Cancel(int id)
     {
         var context = GetDb();
-        var payOrder = await context.Orders.Include(order => order.Seats)
+        var order = await context.Orders.Include(order => order.Seats)
             .SingleOrDefaultAsync(payOrder => payOrder.Id == id);
 
-        if (payOrder is null) return;
+        if (order is null) return;
 
-        if (payOrder.Paid) return;
+        if (order.Paid) return;
 
-        foreach (var seatPaid in payOrder.Seats)
+        foreach (var seatPaid in order.Seats)
         {
             var seat = await context.Seats.SingleOrDefaultAsync(seat => seat.Id == seatPaid.Id);
             if (seat is null) return;
@@ -63,7 +63,7 @@ public class CheckOrderService
             await context.SaveChangesAsync();
         }
 
-        context.Orders.Remove(payOrder);
+        context.Orders.Remove(order);
         await context.SaveChangesAsync();
     }
 
