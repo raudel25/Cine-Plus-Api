@@ -1,6 +1,8 @@
+using Cine_Plus_Api.Helpers;
 using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Responses;
 using Cine_Plus_Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cine_Plus_Api.Controllers;
@@ -20,13 +22,13 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("Generate")]
-    public async Task<ResponseGeneratePayOrder> Post(GeneratePayOrder request)
+    public async Task<ResponseGeneratePayOrder> Generate(GeneratePayOrder request)
     {
         return await this._paymentService.GenerateOrder(request);
     }
 
-    [HttpPost("Pay")]
-    public async Task<ActionResult<IEnumerable<ResponsePaidSeat>>> Post(PayCreditCard request)
+    [HttpPost("PayCreditCard")]
+    public async Task<ActionResult<IEnumerable<ResponsePaidSeat>>> PayCreditCard(PayCreditCard request)
     {
         if (!this._securityService.ValidateToken(request.Token)) return BadRequest(new { message = "Invalid token" });
 
@@ -38,6 +40,19 @@ public class PaymentController : ControllerBase
         if (response.Ok) return response.Value!.ToList();
 
         return StatusCode((int)response.Status, new { message = response.Message });
+    }
+
+    [HttpPost, Authorize]
+    public async Task<ActionResult<ResponseGeneratePayOrder>> PayTicket(GeneratePayOrder request,
+        [FromHeader] string authorization)
+    {
+        var response = this._securityService.DecodingAuth(authorization);
+        if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
+
+        var (id, _, account) = response.Value;
+        if (account is not EmployAccount) return BadRequest(new { message = "Unauthorized" });
+
+        return await this._paymentService.PayTicket(request, id);
     }
 
     [HttpDelete]

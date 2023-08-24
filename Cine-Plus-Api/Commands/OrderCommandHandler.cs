@@ -6,7 +6,7 @@ namespace Cine_Plus_Api.Commands;
 
 public interface IOrderCommandHandler
 {
-    Task<int> Create(CreateOrder request);
+    Task<Order> Create(CreateOrder request);
 
     Task Remove(Order order);
 
@@ -22,14 +22,14 @@ public class OrderCommandHandler : IOrderCommandHandler
         this._context = context;
     }
 
-    public async Task<int> Create(CreateOrder request)
+    public async Task<Order> Create(CreateOrder request)
     {
         var order = request.Order();
 
         this._context.Orders.Add(order);
         await this._context.SaveChangesAsync();
 
-        return order.Id;
+        return order;
     }
 
     public async Task Remove(Order order)

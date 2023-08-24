@@ -9,6 +9,8 @@ public class Pay
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
+    public long Date { get; set; }
+
     [ForeignKey("Order")] public int OrderId { get; set; }
 
     public Order Order { get; set; } = null!;
