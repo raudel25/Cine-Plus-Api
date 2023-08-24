@@ -4,18 +4,19 @@ using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Queries;
 using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Responses;
+using Cine_Plus_Api.Helpers;
 
 namespace Cine_Plus_Api.Services;
 
 public interface IPaymentService
 {
-    Task<ResponseGeneratePayOrder> GenerateOrder(GeneratePayOrder request);
-
-    Task<ApiResponse> CancelPayOrder(int id);
-
     Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCard(int id, PayCreditCard request);
 
     Task<ResponseGeneratePayOrder> PayTicket(GeneratePayOrder request, int employId);
+
+    Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCardWithUser(int id, int userId, PayCreditCard request);
+
+    Task<ResponseGeneratePayOrder> PayTicketWithUser(GeneratePayOrder request, int employId, int userId);
 }
 
 public class PaymentService : IPaymentService
@@ -28,50 +29,48 @@ public class PaymentService : IPaymentService
 
     private readonly SecurityService _securityService;
 
-    private readonly IOrderQueryHandler _orderQuery;
-
-    private readonly CheckOrderService _checkOrderService;
-
     private readonly IPayCommandHandler _payCommand;
 
-    public const string Payment = "payment";
+    private readonly IAuthCommandHandler _authCommand;
+
+    private readonly IAuthQueryHandler _authQuery;
+
+    private readonly IOrderService _orderService;
 
     public const string CancelPayment = "cancel_payment";
 
     public PaymentService(ISeatCommandHandler seatCommand,
         ISeatQueryHandler seatQuery, SecurityService securityService,
-        IOrderCommandHandler orderCommand, IOrderQueryHandler orderQuery,
-        CheckOrderService checkOrderService, IPayCommandHandler payCommand)
+        IOrderCommandHandler orderCommand, IPayCommandHandler payCommand, IAuthCommandHandler authCommand,
+        IAuthQueryHandler authQuery, IOrderService orderService)
     {
         this._seatCommand = seatCommand;
         this._seatQuery = seatQuery;
         this._securityService = securityService;
         this._orderCommand = orderCommand;
-        this._orderQuery = orderQuery;
-        this._checkOrderService = checkOrderService;
         this._payCommand = payCommand;
+        this._authCommand = authCommand;
+        this._authQuery = authQuery;
+        this._orderService = orderService;
     }
 
-    public async Task<ResponseGeneratePayOrder> GenerateOrder(GeneratePayOrder request)
+
+    public async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCard(int id, PayCreditCard request) =>
+        await PayCreditCard(id, request, -1);
+
+    public async Task<ResponseGeneratePayOrder> PayTicket(GeneratePayOrder request, int employId) =>
+        await PayTicket(request, employId, -1);
+
+    public async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCardWithUser(int id, int userId,
+        PayCreditCard request) => await PayCreditCard(id, request, userId);
+
+    public async Task<ResponseGeneratePayOrder> PayTicketWithUser(GeneratePayOrder request, int employId, int userId) =>
+        await PayTicket(request, employId, userId);
+
+    private async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCard(int id, PayCreditCard request,
+        int userId)
     {
-        var (responsePay, order) = await GeneratePayOrderP(request);
-        if (order is null) return responsePay;
-
-        var token = this._securityService.JwtPay(order.Id, Payment, responsePay.Price, responsePay.PricePoints,
-            responsePay.AddPoints, DateTime.UtcNow.AddMinutes(10));
-        responsePay.Token = token;
-
-        var now = DateTime.UtcNow;
-        responsePay.Date = ((DateTimeOffset)now).ToUnixTimeSeconds();
-
-        this._checkOrderService.Add(order.Id.ToString(), order.Id, TimeSpan.FromMinutes(10));
-
-        return responsePay;
-    }
-
-    public async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCard(int id, PayCreditCard request)
-    {
-        var response = await CheckFindOrder(id);
+        var response = await this._orderService.FindRemoveOrder(id);
         if (!response.Ok) return response.ConvertApiResponse<IEnumerable<ResponsePaidSeat>>();
         var order = response.Value!;
 
@@ -82,101 +81,25 @@ public class PaymentService : IPaymentService
         await this._payCommand.CreditCard(id, request);
         await PaidSeats(order);
 
+        if (userId != -1) await AddPointsUser(userId, order.AddPoints);
+
         return new ApiResponse<IEnumerable<ResponsePaidSeat>>(await ResponsePaidSeats(order));
     }
 
-    public async Task<ResponseGeneratePayOrder> PayTicket(GeneratePayOrder request, int employId)
+    private async Task<ResponseGeneratePayOrder> PayTicket(GeneratePayOrder request, int employId, int userId)
     {
-        var (responsePay, order) = await GeneratePayOrderP(request);
+        var (responsePay, order) = await this._orderService.GenerateOrder(request);
         if (order is null) return responsePay;
 
         await this._orderCommand.Pay(order);
         await this._payCommand.Ticket(order.Id, employId);
         await PaidSeats(order);
 
+        if (userId != -1) await AddPointsUser(userId, order.AddPoints);
+
         return responsePay;
     }
 
-    public async Task<ApiResponse> CancelPayOrder(int id)
-    {
-        var response = await CheckFindOrder(id);
-        if (!response.Ok) return response.ConvertApiResponse();
-        var order = response.Value!;
-
-        foreach (var seat in order.Seats)
-        {
-            await this._seatCommand.Available(seat.Id);
-        }
-
-        await this._orderCommand.Remove(order);
-
-        return new ApiResponse();
-    }
-
-    private async Task<(List<Seat>, List<ResponseSeatOrder>)> ProcessSeats(GeneratePayOrder request)
-    {
-        var validSeats = new List<Seat>();
-        var seatsResponse = new List<ResponseSeatOrder>();
-
-        foreach (var seat in request.Seats)
-        {
-            var response = await ProcessSeat(seat);
-
-            if (response.Ok)
-                validSeats.Add(response.Value!);
-
-            seatsResponse.Add(new ResponseSeatOrder { Id = seat.Id, Message = response.Ok ? "Ok" : response.Message! });
-        }
-
-        return (validSeats, seatsResponse);
-    }
-
-    private async Task<ApiResponse<Seat>> ProcessSeat(GenerateSeatOrder seatOrder)
-    {
-        if (seatOrder.Discounts.Distinct().ToList().Count != seatOrder.Discounts.Count)
-            return new ApiResponse<Seat>(HttpStatusCode.BadRequest, "The show movie contains repeated discounts");
-
-        var seat = await this._seatQuery.HandlerShowMovieDiscounts(seatOrder.Id);
-        if (seat is null) return new ApiResponse<Seat>(HttpStatusCode.NotFound, "Not found seat");
-
-        var discounts = seat.ShowMovie.Discounts;
-
-        foreach (var discountId in seatOrder.Discounts)
-        {
-            var discount = discounts.SingleOrDefault(discount => discount.Id == discountId);
-            if (discount is null)
-                return new ApiResponse<Seat>(HttpStatusCode.NotFound, "Not found discount in show movie");
-        }
-
-        var response = await this._seatCommand.Reserve(seat, discounts);
-        if (!response.Ok) return response.ConvertApiResponse<Seat>();
-
-        return new ApiResponse<Seat>(seat);
-    }
-
-    private static double CalculatePrice(Seat seat)
-    {
-        var d = seat.Discounts.Select(discount => discount.DiscountPercent).Sum();
-        return (100 - d) * seat.Price / 100;
-    }
-
-    private static int CalculatePricePoints(Seat seat)
-    {
-        var d = seat.Discounts.Select(discount => discount.DiscountPercent).Sum();
-        return (int)((100 - d) * seat.PricePoints / 100);
-    }
-
-    private async Task<ApiResponse<Order>> CheckFindOrder(int id)
-    {
-        var order = await this._orderQuery.HandlerSeats(id);
-        if (order is null) return new ApiResponse<Order>(HttpStatusCode.NotFound, "Not found pay order");
-
-        if (order.Paid) return new ApiResponse<Order>(HttpStatusCode.BadRequest, "The order has been paid");
-
-        this._checkOrderService.Remove(id.ToString());
-
-        return new ApiResponse<Order>(order);
-    }
 
     private async Task<IEnumerable<ResponsePaidSeat>> ResponsePaidSeats(Order order)
     {
@@ -212,8 +135,8 @@ public class PaymentService : IPaymentService
         var possible = now <= expire;
 
         return possible
-            ? this._securityService.JwtPay(id, CancelPayment, CalculatePrice(seatDiscounts!),
-                CalculatePricePoints(seatDiscounts!), seatDiscounts!.AddPoints,
+            ? this._securityService.JwtPay(id, CancelPayment, Calculate.CalculatePrice(seatDiscounts!),
+                Calculate.CalculatePricePoints(seatDiscounts!), seatDiscounts!.AddPoints,
                 expire)
             : null;
     }
@@ -226,23 +149,12 @@ public class PaymentService : IPaymentService
         }
     }
 
-    private async Task<(ResponseGeneratePayOrder, Order?)> GeneratePayOrderP(GeneratePayOrder request)
+
+    private async Task AddPointsUser(int id, int points)
     {
-        var (validSeats, seatsResponse) = await ProcessSeats(request);
+        var user = await this._authQuery.User(id);
+        if (user is null) return;
 
-        var price = validSeats.Select(CalculatePrice).Sum();
-        var pricePoints = validSeats.Select(CalculatePricePoints).Sum();
-        var addPoints = validSeats.Select(seat => seat.AddPoints).Sum();
-
-        var responsePay = new ResponseGeneratePayOrder
-            { Seats = seatsResponse, Price = price, PricePoints = pricePoints, AddPoints = addPoints };
-
-        if (validSeats.Count == 0) return (responsePay, null);
-
-        var createPayOrder = new CreateOrder
-            { Seats = validSeats, Price = price, PricePoints = pricePoints, AddPoints = addPoints };
-        var order = await this._orderCommand.Create(createPayOrder);
-
-        return (responsePay, order);
+        await this._authCommand.User(user, user.Points += points);
     }
 }
