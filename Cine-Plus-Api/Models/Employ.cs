@@ -16,4 +16,6 @@ public class Employ
     [Required] public string Password { get; set; } = null!;
 
     public ICollection<Ticket> Tickets { get; set; } = null!;
+    
+    public ICollection<TicketPointsUser> TicketPointsUsers { get; set; } = null!;
 }

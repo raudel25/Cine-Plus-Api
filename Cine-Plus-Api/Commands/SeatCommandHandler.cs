@@ -9,7 +9,7 @@ namespace Cine_Plus_Api.Commands;
 
 public interface ISeatCommandHandler
 {
-    Task Create(ShowMovie showMovie, double price);
+    Task Create(ShowMovie showMovie, double price, int pricePoints, int addPoints);
 
     Task Update();
 
@@ -32,12 +32,16 @@ public class SeatCommandHandler : ISeatCommandHandler
         this._seatQuery = seatQuery;
     }
 
-    public async Task Create(ShowMovie showMovie, double price)
+    public async Task Create(ShowMovie showMovie, double price, int pricePoints, int addPoints)
     {
         for (var i = 1; i <= showMovie.Cinema.CantSeats; i++)
         {
             this._context.Seats.Add(
-                new Seat { ShowMovieId = showMovie.Id, Number = i, Price = price, State = SeatState.Available });
+                new Seat
+                {
+                    ShowMovieId = showMovie.Id, Number = i, Price = price, PricePoints = pricePoints,
+                    AddPoints = addPoints, State = SeatState.Available
+                });
         }
 
         await this._context.SaveChangesAsync();

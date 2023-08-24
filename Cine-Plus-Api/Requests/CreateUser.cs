@@ -10,5 +10,5 @@ public class CreateUser
 
     public string Password { get; set; } = null!;
 
-    public virtual User User() => new() { Name = this.Name, Email = this.Email, Password = this.Password };
+    public virtual User User() => new() { Name = this.Name, Email = this.Email, Points = 0, Password = this.Password };
 }

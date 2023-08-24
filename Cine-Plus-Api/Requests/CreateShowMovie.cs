@@ -13,6 +13,10 @@ public class CreateShowMovie
 
     public double Price { get; set; }
 
+    public int PricePoints { get; set; }
+
+    public int AddPoints { get; set; }
+
     public ICollection<int> Discounts { get; set; } = null!;
 
     public virtual ShowMovie ShowMovie() =>

@@ -18,6 +18,10 @@ public class Seat
 
     [Required] public double Price { get; set; }
 
+    [Required] public int PricePoints { get; set; }
+
+    [Required] public int AddPoints { get; set; }
+
     [Required] public int Number { get; set; }
 
     [Required] public SeatState State { get; set; }

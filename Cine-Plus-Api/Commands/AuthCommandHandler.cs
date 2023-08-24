@@ -14,6 +14,8 @@ public interface IAuthCommandHandler
 
     Task<ApiResponse> User(UpdateUser request);
 
+    Task User(User user, int points);
+
     Task<CreateEmployResponse> Employ();
 
     Task<CreateManagerResponse> Manager();
@@ -68,6 +70,13 @@ public class AuthCommandHandler : IAuthCommandHandler
         await this._context.SaveChangesAsync();
 
         return new ApiResponse();
+    }
+
+    public async Task User(User user, int points)
+    {
+        user.Points = points;
+        this._context.Users.Update(user);
+        await this._context.SaveChangesAsync();
     }
 
 

@@ -17,5 +17,9 @@ public class User
 
     [Required] public string Password { get; set; } = null!;
 
+    [Required] public int Points { get; set; }
+
     public ICollection<PointsUser> PointsUsers { get; set; } = null!;
+
+    public ICollection<TicketPointsUser> TicketPointsUsers { get; set; } = null!;
 }

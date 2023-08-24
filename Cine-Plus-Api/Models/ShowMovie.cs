@@ -9,7 +9,7 @@ public class ShowMovie
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    public long Date { get; set; }
+    [Required] public long Date { get; set; }
 
     [ForeignKey("Movie")] public int MovieId { get; set; }
 
