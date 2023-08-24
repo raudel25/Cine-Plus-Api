@@ -45,7 +45,8 @@ public class AuthController : ControllerBase
         var responseAuth = this._securityService.DecodingAuth(authorization);
         if (!responseAuth.Ok) return StatusCode((int)responseAuth.Status, new { message = responseAuth.Message });
 
-        if (responseAuth.Value.Item1 != request.Id) return Unauthorized(new { message = "Unauthorized" });
+        if (responseAuth.Value.Item1 != request.Id || responseAuth.Value.Item3 is not UserAccount)
+            return Unauthorized(new { message = "Unauthorized" });
 
         var response = await this._authCommand.User(request);
         if (!response.Ok) return StatusCode((int)response.Status, new { message = response.Message });
