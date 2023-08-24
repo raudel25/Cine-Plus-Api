@@ -14,7 +14,6 @@ public class Order
     [Required] public bool Paid { get; set; }
 
     public ICollection<Seat> Seats { get; set; } = null!;
-    
-    //TODO
-    public ICollection<Order> Orders { get; set; } = null!;
+
+    public ICollection<Pay> Pays { get; set; } = null!;
 }
