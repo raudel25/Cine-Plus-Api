@@ -63,6 +63,11 @@ public class ShowMovieCommandHandler : IShowMovieCommandHandler
         var addDiscounts = await AddDiscounts(showMovie, request.Discounts);
         if (!addDiscounts.Ok) return addDiscounts.ConvertApiResponse<int>();
 
+        var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(showMovie.Date);
+        var date = dateTimeOffset.DateTime;
+
+        if (DateTime.UtcNow > date) return new ApiResponse<int>(HttpStatusCode.BadRequest, "Incorrect date");
+
         this._context.ShowMovies.Add(showMovie);
         await this._context.SaveChangesAsync();
 
