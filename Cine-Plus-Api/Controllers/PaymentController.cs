@@ -69,7 +69,10 @@ public class PaymentController : ControllerBase
         var (id, _, account) = response.Value;
         if (account is not EmployAccount) return BadRequest(new { message = "Unauthorized" });
 
-        return await this._paymentService.PayTicket(request.Order, id);
+        var responsePay = await this._paymentService.PayTicket(request.Order, id);
+        if (responsePay.Ok) return StatusCode((int)responsePay.Status, new { message = responsePay.Message });
+
+        return responsePay.Value!;
     }
 
     [HttpPost("PayTicketUser"), Authorize]
@@ -82,6 +85,9 @@ public class PaymentController : ControllerBase
         var (id, _, account) = response.Value;
         if (account is not EmployAccount) return BadRequest(new { message = "Unauthorized" });
 
-        return await this._paymentService.PayTicketWithUser(request.Order, id, request.Id);
+        var responsePay = await this._paymentService.PayTicketWithUser(request.Order, id, request.Id);
+        if (responsePay.Ok) return StatusCode((int)responsePay.Status, new { message = responsePay.Message });
+
+        return responsePay.Value!;
     }
 }

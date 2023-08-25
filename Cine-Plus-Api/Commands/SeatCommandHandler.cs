@@ -59,10 +59,11 @@ public class SeatCommandHandler : ISeatCommandHandler
     public async Task<ApiResponse> Reserve(Seat seat, ICollection<Discount> discounts)
     {
         var showMovie = await this._showMovieQuery.Handler(seat.ShowMovieId);
+        if (showMovie is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found show movie");
 
-        if (!ShowMovieQueryHandler.AvailableShowMovie(showMovie!))
+        if (!ShowMovieQueryHandler.AvailableShowMovie(showMovie))
             return new ApiResponse(HttpStatusCode.BadRequest, "The date of show movie has been expired");
-        
+
         if (seat.State != SeatState.Available)
             return new ApiResponse(HttpStatusCode.BadRequest, "The seat has been reserved or bought");
 
