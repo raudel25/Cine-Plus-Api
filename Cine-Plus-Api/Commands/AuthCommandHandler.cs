@@ -39,7 +39,7 @@ public class AuthCommandHandler : IAuthCommandHandler
 
     public async Task<ApiResponse<int>> User(CreateUser request)
     {
-        var responseSameEmail = await CheckSameEmail(request.Email);
+        var responseSameEmail = await CheckSameEmailIdentityCard(request.Email, request.IdentityCard);
         if (!responseSameEmail.Ok) return responseSameEmail.ConvertApiResponse<int>();
 
         var user = request.User();
@@ -136,7 +136,7 @@ public class AuthCommandHandler : IAuthCommandHandler
 
     private async Task<ApiResponse<User>> FindUser(int id)
     {
-        var user = await this._authQuery.User(id);
+        var user = await this._authQuery.UserId(id);
 
         return user is null
             ? new ApiResponse<User>(HttpStatusCode.NotFound, "Not found user")
@@ -171,12 +171,13 @@ public class AuthCommandHandler : IAuthCommandHandler
         return new ApiResponse();
     }
 
-    private async Task<ApiResponse> CheckSameEmail(string email)
+    private async Task<ApiResponse> CheckSameEmailIdentityCard(string email, long ic)
     {
-        var response = await this._authQuery.User(email);
+        var response1 = await this._authQuery.UserEmail(email);
+        var response2 = await this._authQuery.UserIdentityCard(ic);
 
-        return response is null
+        return response1 is null && response2 is null
             ? new ApiResponse()
-            : new ApiResponse(HttpStatusCode.BadRequest, "There is already a user with the same email");
+            : new ApiResponse(HttpStatusCode.BadRequest, "There is already a user with the same email or name");
     }
 }

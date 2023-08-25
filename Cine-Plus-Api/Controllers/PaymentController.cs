@@ -13,22 +13,12 @@ public class PaymentController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
 
-    private readonly IOrderService _orderService;
-
     private readonly SecurityService _securityService;
 
-    public PaymentController(IPaymentService paymentService, SecurityService securityService,
-        IOrderService orderService)
+    public PaymentController(IPaymentService paymentService, SecurityService securityService)
     {
         this._paymentService = paymentService;
         this._securityService = securityService;
-        this._orderService = orderService;
-    }
-
-    [HttpPost("Generate")]
-    public async Task<ResponseGeneratePayOrder> Generate(GeneratePayOrder request)
-    {
-        return await this._orderService.GenerateOrderWeb(request);
     }
 
     [HttpPost("PayCreditCard")]
@@ -93,20 +83,5 @@ public class PaymentController : ControllerBase
         if (account is not EmployAccount) return BadRequest(new { message = "Unauthorized" });
 
         return await this._paymentService.PayTicketWithUser(request.Order, id, request.Id);
-    }
-
-    [HttpDelete]
-    public async Task<IActionResult> Delete(CancelOrder request)
-    {
-        if (!this._securityService.ValidateToken(request.Token)) return BadRequest(new { message = "Invalid token" });
-
-        var responseToken = this._securityService.DecodingPay(request.Token);
-        if (!responseToken.Ok || responseToken.Value.Item2 != OrderService.Payment)
-            return BadRequest(new { message = "Invalid token" });
-
-        var response = await this._orderService.CancelOrder(responseToken.Value.Item1);
-        if (response.Ok) return Ok();
-
-        return StatusCode((int)response.Status, new { message = response.Message });
     }
 }

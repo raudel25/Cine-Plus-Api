@@ -6,9 +6,13 @@ namespace Cine_Plus_Api.Queries;
 
 public interface IAuthQueryHandler
 {
-    Task<User?> User(string email);
+    Task<User?> UserEmail(string email);
 
-    Task<User?> User(int id);
+    Task<User?> UserName(string name);
+
+    Task<User?> UserId(int id);
+
+    Task<User?> UserIdentityCard(long ic);
 
     Task<int> MaxEmploy();
 
@@ -32,14 +36,24 @@ public class AuthQueryHandler : IAuthQueryHandler
         this._context = context;
     }
 
-    public async Task<User?> User(string email)
+    public async Task<User?> UserEmail(string email)
     {
         return await this._context.Users.SingleOrDefaultAsync(user => user.Email == email);
     }
 
-    public async Task<User?> User(int id)
+    public async Task<User?> UserName(string email)
+    {
+        return await this._context.Users.SingleOrDefaultAsync(user => user.Email == email);
+    }
+
+    public async Task<User?> UserId(int id)
     {
         return await this._context.Users.SingleOrDefaultAsync(user => user.Id == id);
+    }
+
+    public async Task<User?> UserIdentityCard(long ic)
+    {
+        return await this._context.Users.SingleOrDefaultAsync(user => user.IdentityCard == ic);
     }
 
     public async Task<int> MaxEmploy()

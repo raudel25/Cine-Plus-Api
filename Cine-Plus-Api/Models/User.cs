@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Cine_Plus_Api.Models;
 
 [Index(nameof(Email), IsUnique = true)]
+[Index(nameof(IdentityCard), IsUnique = true)]
 public class User
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
+
+    [Required] public long IdentityCard { get; set; }
 
     [Required] public string Name { get; set; } = null!;
 

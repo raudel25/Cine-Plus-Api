@@ -26,6 +26,19 @@ public class AuthController : ControllerBase
         this._authQuery = authQuery;
     }
 
+    [HttpGet("User"), Authorize]
+    public async Task<ActionResult<int>> GetUser(GetUser request, [FromHeader] string authorization)
+    {
+        var responseSecurity = this._securityService.Authorize(authorization, new EmployAccount());
+        if (!responseSecurity.Ok)
+            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
+
+        var user = await this._authQuery.UserName(request.Name);
+        if (user is null) return NotFound(new { message = "Not found user" });
+
+        return user.Id;
+    }
+
     [HttpPost("user/register")]
     public async Task<ActionResult<AuthResponse>> CreateUser(CreateUser request)
     {
@@ -57,7 +70,7 @@ public class AuthController : ControllerBase
     [HttpPost("user/login")]
     public async Task<ActionResult<AuthResponse>> LoginUser(Login request)
     {
-        var user = await this._authQuery.User(request.User);
+        var user = await this._authQuery.UserEmail(request.User);
 
         if (user is null || !Password.CheckPassword(user.Password, request.Password))
             return BadRequest(new { message = "Incorrect email or password" });

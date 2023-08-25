@@ -152,7 +152,7 @@ public class PaymentService : IPaymentService
 
     private async Task AddPointsUser(int id, int points)
     {
-        var user = await this._authQuery.User(id);
+        var user = await this._authQuery.UserId(id);
         if (user is null) return;
 
         await this._authCommand.User(user, user.Points += points);
