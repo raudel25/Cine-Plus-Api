@@ -17,6 +17,11 @@ public interface IPaymentService
     Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCardWithUser(int id, int userId, PayCreditCard request);
 
     Task<ApiResponse<ResponseGeneratePayOrder>> PayTicketWithUser(GeneratePayOrder request, int employId, int userId);
+
+    Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayPointsUser(int id, PayPoints request, int userId);
+
+    Task<ApiResponse<ResponseGeneratePayOrder>> PayTicketPointsUser(GeneratePayOrder request, int employId,
+        int userId);
 }
 
 public class PaymentService : IPaymentService
@@ -64,7 +69,8 @@ public class PaymentService : IPaymentService
     public async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCardWithUser(int id, int userId,
         PayCreditCard request) => await PayCreditCard(id, request, userId);
 
-    public async Task<ApiResponse<ResponseGeneratePayOrder>> PayTicketWithUser(GeneratePayOrder request, int employId, int userId) =>
+    public async Task<ApiResponse<ResponseGeneratePayOrder>> PayTicketWithUser(GeneratePayOrder request, int employId,
+        int userId) =>
         await PayTicket(request, employId, userId);
 
     private async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayCreditCard(int id, PayCreditCard request,
@@ -93,7 +99,8 @@ public class PaymentService : IPaymentService
         return responsePaidSeats;
     }
 
-    private async Task<ApiResponse<ResponseGeneratePayOrder>> PayTicket(GeneratePayOrder request, int employId, int userId)
+    private async Task<ApiResponse<ResponseGeneratePayOrder>> PayTicket(GeneratePayOrder request, int employId,
+        int userId)
     {
         var (responsePay, order) = await this._orderService.GenerateOrder(request);
         if (order is null) return new ApiResponse<ResponseGeneratePayOrder>(responsePay);
@@ -103,7 +110,7 @@ public class PaymentService : IPaymentService
             var responseUser = await AddPointsUser(userId, order.AddPoints);
             if (!responseUser.Ok) return responseUser.ConvertApiResponse<ResponseGeneratePayOrder>();
         }
-        
+
         await this._orderCommand.Pay(order);
         await this._payCommand.Ticket(order.Id, employId);
         await PaidSeats(order);
@@ -113,6 +120,54 @@ public class PaymentService : IPaymentService
         return new ApiResponse<ResponseGeneratePayOrder>(responsePay);
     }
 
+    public async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> PayPointsUser(int id, PayPoints request, int userId)
+    {
+        var response = await this._orderService.FindRemoveOrder(id);
+        if (!response.Ok) return response.ConvertApiResponse<IEnumerable<ResponsePaidSeat>>();
+        var order = response.Value!;
+
+        var user = await this._authQuery.UserId(userId);
+        if (user is null)
+            return new ApiResponse<IEnumerable<ResponsePaidSeat>>(HttpStatusCode.NotFound, "Not found user");
+
+        if (user.Points < request.Points)
+            return new ApiResponse<IEnumerable<ResponsePaidSeat>>(HttpStatusCode.BadRequest,
+                "You do not have enough points");
+
+        var responsePaidSeats = await ResponsePaidSeats(order);
+        if (!responsePaidSeats.Ok) return responsePaidSeats;
+
+        await this._orderCommand.Pay(order);
+        await this._payCommand.PointsUser(id, userId);
+        await PaidSeats(order);
+        await DiscountPointsUser(user, order.PricePoints);
+
+        return responsePaidSeats;
+    }
+
+    public async Task<ApiResponse<ResponseGeneratePayOrder>> PayTicketPointsUser(GeneratePayOrder request, int employId,
+        int userId)
+    {
+        var (responsePay, order) = await this._orderService.GenerateOrder(request);
+        if (order is null) return new ApiResponse<ResponseGeneratePayOrder>(responsePay);
+
+        var user = await this._authQuery.UserId(userId);
+        if (user is null)
+            return new ApiResponse<ResponseGeneratePayOrder>(HttpStatusCode.NotFound, "Not found user");
+
+        if (user.Points < order.PricePoints)
+            return new ApiResponse<ResponseGeneratePayOrder>(HttpStatusCode.BadRequest,
+                "You do not have enough points");
+
+        await this._orderCommand.Pay(order);
+        await this._payCommand.TicketPointsUser(order.Id, employId, userId);
+        await PaidSeats(order);
+        await DiscountPointsUser(user, order.PricePoints);
+
+        if (userId != -1) await AddPointsUser(userId, order.AddPoints);
+
+        return new ApiResponse<ResponseGeneratePayOrder>(responsePay);
+    }
 
     private async Task<ApiResponse<IEnumerable<ResponsePaidSeat>>> ResponsePaidSeats(Order order)
     {
@@ -169,7 +224,6 @@ public class PaymentService : IPaymentService
         }
     }
 
-
     private async Task<ApiResponse> AddPointsUser(int id, int points)
     {
         var user = await this._authQuery.UserId(id);
@@ -178,5 +232,10 @@ public class PaymentService : IPaymentService
         await this._authCommand.User(user, user.Points += points);
 
         return new ApiResponse();
+    }
+
+    private async Task DiscountPointsUser(User user, int points)
+    {
+        await this._authCommand.User(user, user.Points -= points);
     }
 }
