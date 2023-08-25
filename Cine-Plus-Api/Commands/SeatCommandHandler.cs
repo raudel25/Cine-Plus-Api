@@ -27,10 +27,14 @@ public class SeatCommandHandler : ISeatCommandHandler
 
     private readonly ISeatQueryHandler _seatQuery;
 
-    public SeatCommandHandler(CinePlusContext context, ISeatQueryHandler seatQuery)
+    private readonly IShowMovieQueryHandler _showMovieQuery;
+
+    public SeatCommandHandler(CinePlusContext context, ISeatQueryHandler seatQuery,
+        IShowMovieQueryHandler showMovieQuery)
     {
         this._context = context;
         this._seatQuery = seatQuery;
+        this._showMovieQuery = showMovieQuery;
     }
 
     public async Task Create(CreateSeat request)
@@ -45,15 +49,20 @@ public class SeatCommandHandler : ISeatCommandHandler
 
     public async Task UpdateSeats()
     {
-        var available = await this._context.Seats.ToListAsync();
+        var available = await this._context.Seats.Include(seat => seat.ShowMovie).ToListAsync();
 
         var notAvailable = available.Where(seat => !ShowMovieQueryHandler.AvailableShowMovie(seat.ShowMovie));
 
-        await Remove(notAvailable);
+        await NotBought(notAvailable);
     }
 
     public async Task<ApiResponse> Reserve(Seat seat, ICollection<Discount> discounts)
     {
+        var showMovie = await this._showMovieQuery.Handler(seat.ShowMovieId);
+
+        if (!ShowMovieQueryHandler.AvailableShowMovie(showMovie!))
+            return new ApiResponse(HttpStatusCode.BadRequest, "The date of show movie has been expired");
+        
         if (seat.State != SeatState.Available)
             return new ApiResponse(HttpStatusCode.BadRequest, "The seat has been reserved or bought");
 
@@ -72,11 +81,12 @@ public class SeatCommandHandler : ISeatCommandHandler
         }
     }
 
-    public async Task Remove(IEnumerable<Seat> seats)
+    private async Task NotBought(IEnumerable<Seat> seats)
     {
         foreach (var seat in seats)
         {
-            this._context.Remove(seat);
+            seat.State = SeatState.NotBought;
+            this._context.Seats.Update(seat);
         }
 
         await this._context.SaveChangesAsync();

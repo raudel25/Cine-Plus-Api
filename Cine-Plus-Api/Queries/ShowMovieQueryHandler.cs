@@ -10,6 +10,10 @@ public interface IShowMovieQueryHandler
 {
     Task<IEnumerable<ShowMovie>> Handler();
 
+    Task<ShowMovie?> Handler(int id);
+
+    Task<IEnumerable<ShowMovie>> AvailableShowMovie();
+
     Task<ApiResponse> IsValid(ShowMovie showMovie);
 
     Task<ICollection<ShowMovie>> AvailableMovie(int id);
@@ -26,6 +30,17 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
     public ShowMovieQueryHandler(CinePlusContext context)
     {
         this._context = context;
+    }
+
+    public async Task<ShowMovie?> Handler(int id)
+    {
+        return await this._context.ShowMovies.SingleOrDefaultAsync(showMovie => showMovie.Id == id);
+    }
+
+    public async Task<IEnumerable<ShowMovie>> AvailableShowMovie()
+    {
+        var list = await this._context.ShowMovies.ToListAsync();
+        return list.Where(AvailableShowMovie);
     }
 
     public async Task<IEnumerable<ShowMovie>> Handler()

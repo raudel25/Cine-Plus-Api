@@ -7,7 +7,8 @@ public enum SeatState
 {
     Available,
     Reserved,
-    Bought
+    Bought,
+    NotBought
 }
 
 public class Seat

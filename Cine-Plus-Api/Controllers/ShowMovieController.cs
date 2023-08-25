@@ -33,6 +33,12 @@ public class ShowMovieController : ControllerBase
         return await this._showMovieQuery.Handler();
     }
 
+    [HttpGet("Available")]
+    public async Task<IEnumerable<ShowMovie>> GetAvailable()
+    {
+        return await this._showMovieQuery.AvailableShowMovie();
+    }
+
     [HttpPost, Authorize]
     public async Task<ActionResult<int>> Post(CreateShowMovie request, [FromHeader] string authorization)
     {

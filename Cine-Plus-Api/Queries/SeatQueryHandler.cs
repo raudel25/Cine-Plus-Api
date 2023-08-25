@@ -6,7 +6,11 @@ namespace Cine_Plus_Api.Queries;
 
 public interface ISeatQueryHandler
 {
-    Task<ICollection<Seat>> Handler();
+    Task<IEnumerable<Seat>> Handler();
+
+    Task<IEnumerable<Seat>> AvailableSeat();
+
+    Task<IEnumerable<Seat>> AvailableSeat(int showMovieId);
 
     Task<Seat?> HandlerDiscounts(int id);
 
@@ -24,9 +28,20 @@ public class SeatQueryHandler : ISeatQueryHandler
         this._context = context;
     }
 
-    public async Task<ICollection<Seat>> Handler()
+    public async Task<IEnumerable<Seat>> Handler()
     {
         return await this._context.Seats.ToListAsync();
+    }
+
+    public async Task<IEnumerable<Seat>> AvailableSeat()
+    {
+        return await this._context.Seats.Where(seat => seat.State == SeatState.Available).ToListAsync();
+    }
+
+    public async Task<IEnumerable<Seat>> AvailableSeat(int showMovieId)
+    {
+        return await this._context.Seats.Where(seat => seat.State == SeatState.Available && seat.Id == showMovieId)
+            .ToListAsync();
     }
 
     public async Task<Seat?> HandlerShowMovieDiscounts(int id)
