@@ -226,11 +226,11 @@ public class PaymentService : IPaymentService
 
     private async Task<ApiResponse> AddPointsUser(int id, int points)
     {
-        return await this._authCommand.User(id, points);
+        return await this._authCommand.AddPointsUser(id, points);
     }
 
     private async Task DiscountPointsUser(int id, int points)
     {
-        await this._authCommand.User(id, -points);
+        await this._authCommand.AddPointsUser(id, -points);
     }
 }

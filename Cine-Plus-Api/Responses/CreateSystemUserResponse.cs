@@ -1,6 +1,6 @@
 namespace Cine_Plus_Api.Responses;
 
-public class CreateManagerResponse
+public class CreateSystemUserResponse
 {
     public string User { get; set; } = null!;
 

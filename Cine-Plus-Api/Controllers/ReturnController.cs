@@ -19,7 +19,7 @@ public class ReturnController : ControllerBase
     }
 
     [HttpPost("ReturnCreditCard")]
-    public async Task<IActionResult> ReturnCreditCard(ReturnRequest request)
+    public async Task<IActionResult> ReturnCreditCard(TokenRequest request)
     {
         if (!this._securityService.ValidateToken(request.Token)) return BadRequest(new { message = "Invalid token" });
 
@@ -34,7 +34,7 @@ public class ReturnController : ControllerBase
     }
 
     [HttpPost("ReturnPointsUser")]
-    public async Task<IActionResult> ReturnPointsUser(ReturnRequest request)
+    public async Task<IActionResult> ReturnPointsUser(TokenRequest request)
     {
         if (!this._securityService.ValidateToken(request.Token)) return BadRequest(new { message = "Invalid token" });
 

@@ -38,21 +38,18 @@ public class ReturnService : IReturnService
 
     public async Task<ApiResponse> ReturnCreditCard(int id)
     {
-        var seat = await this._seatQuery.HandlerDiscounts(id);
-        if (seat is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found seat");
+        var response = await FindSeatOrder(id);
+        if (!response.Ok) return response.ConvertApiResponse();
 
-        if (seat.State != SeatState.Bought) return new ApiResponse(HttpStatusCode.BadRequest, "Incorrect seat");
-
-        var seatOrder = await this._seatQuery.HandlerOrder(id);
-        var orderId = seatOrder!.Orders.ToList()[0].Id;
+        var (seat, order) = response.Value;
 
         var amount = Calculate.CalculatePrice(seat);
 
-        var orderPay = await this._orderQuery.HandlerPays(orderId);
+        var orderPay = await this._orderQuery.HandlerPays(order.Id);
         if (orderPay!.Pays.ToList()[0] is not CreditCard pay)
             return new ApiResponse(HttpStatusCode.BadRequest, "Incorrect seat");
 
-        await this._returnCommand.ReturnCreditCard(id, orderId, amount);
+        await this._returnCommand.ReturnCreditCard(id, order.Id, amount);
         await ReturnMoney(pay.Card, amount);
         await this._seatCommand.Available(id);
 
@@ -61,21 +58,18 @@ public class ReturnService : IReturnService
 
     public async Task<ApiResponse> ReturnPointsUser(int id)
     {
-        var seat = await this._seatQuery.HandlerDiscounts(id);
-        if (seat is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found seat");
+        var response = await FindSeatOrder(id);
+        if (!response.Ok) return response.ConvertApiResponse();
 
-        if (seat.State != SeatState.Bought) return new ApiResponse(HttpStatusCode.BadRequest, "Incorrect seat");
-
-        var seatOrder = await this._seatQuery.HandlerOrder(id);
-        var orderId = seatOrder!.Orders.ToList()[0].Id;
+        var (seat, order) = response.Value;
 
         var points = seat.PricePoints;
 
-        var orderPay = await this._orderQuery.HandlerPays(orderId);
+        var orderPay = await this._orderQuery.HandlerPays(order.Id);
         if (orderPay!.Pays.ToList()[0] is not PointsUser pay)
             return new ApiResponse(HttpStatusCode.BadRequest, "Incorrect seat");
 
-        await this._returnCommand.ReturnPointsUser(id, orderId, points);
+        await this._returnCommand.ReturnPointsUser(id, order.Id, points);
         await AddPointsUser(pay.UserId, points);
         await this._seatCommand.Available(id);
 
@@ -84,11 +78,25 @@ public class ReturnService : IReturnService
 
     private async Task AddPointsUser(int id, int points)
     {
-        await this._authCommand.User(id, points);
+        await this._authCommand.AddPointsUser(id, points);
     }
 
     private async Task ReturnMoney(long card, double amount)
     {
         await Task.Delay(new TimeSpan(0, 0, 5));
+    }
+
+    private async Task<ApiResponse<(Seat, Order)>> FindSeatOrder(int id)
+    {
+        var seat = await this._seatQuery.HandlerDiscounts(id);
+        if (seat is null) return new ApiResponse<(Seat, Order)>(HttpStatusCode.NotFound, "Not found seat");
+
+        if (seat.State != SeatState.Bought)
+            return new ApiResponse<(Seat, Order)>(HttpStatusCode.BadRequest, "Incorrect seat");
+
+        var seatOrder = await this._seatQuery.HandlerOrder(id);
+        var order = seatOrder!.Orders.ToList()[0];
+
+        return new ApiResponse<(Seat, Order)>((seat, order));
     }
 }

@@ -117,7 +117,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("manager/register"), Authorize]
-    public async Task<ActionResult<CreateManagerResponse>> CreateManager([FromHeader] string authorization)
+    public async Task<ActionResult<CreateSystemUserResponse>> CreateManager([FromHeader] string authorization)
     {
         var responseSecurity = this._securityService.Authorize(authorization, new AdminAccount());
         if (!responseSecurity.Ok)

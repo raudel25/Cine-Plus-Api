@@ -14,11 +14,11 @@ public interface IAuthCommandHandler
 
     Task<ApiResponse> User(UpdateUser request);
 
-    Task<ApiResponse> User(int id, int points);
+    Task<ApiResponse> AddPointsUser(int id, int points);
 
     Task<CreateEmployResponse> Employ();
 
-    Task<CreateManagerResponse> Manager();
+    Task<CreateSystemUserResponse> Manager();
 
     Task<ApiResponse> Employ(int id);
 
@@ -72,7 +72,7 @@ public class AuthCommandHandler : IAuthCommandHandler
         return new ApiResponse();
     }
 
-    public async Task<ApiResponse> User(int id, int points)
+    public async Task<ApiResponse> AddPointsUser(int id, int points)
     {
         var user = await this._authQuery.UserId(id);
         if (user is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found user");
@@ -99,7 +99,7 @@ public class AuthCommandHandler : IAuthCommandHandler
         return new CreateEmployResponse { User = user, Password = password };
     }
 
-    public async Task<CreateManagerResponse> Manager()
+    public async Task<CreateSystemUserResponse> Manager()
     {
         var number = await this._authQuery.MaxManager() + 1;
         var password = Password.RandomPassword();
@@ -110,7 +110,7 @@ public class AuthCommandHandler : IAuthCommandHandler
         this._context.Managers.Add(manager);
         await this._context.SaveChangesAsync();
 
-        return new CreateManagerResponse { User = user, Password = password };
+        return new CreateSystemUserResponse { User = user, Password = password };
     }
 
     public async Task<ApiResponse> Employ(int id)

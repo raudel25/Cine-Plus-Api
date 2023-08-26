@@ -43,7 +43,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpDelete]
-    public async Task<IActionResult> Delete(CancelOrder request)
+    public async Task<IActionResult> Delete(TokenRequest request)
     {
         if (!this._securityService.ValidateToken(request.Token)) return BadRequest(new { message = "Invalid token" });
 
