@@ -36,4 +36,6 @@ public class Seat
     public ICollection<Order> Orders { get; set; } = null!;
 
     public ICollection<Discount> Discounts { get; set; } = null!;
+
+    public ICollection<ReturnPay> ReturnPays { get; set; } = null!;
 }

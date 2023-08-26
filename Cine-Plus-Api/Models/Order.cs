@@ -20,4 +20,6 @@ public class Order
     public ICollection<Seat> Seats { get; set; } = null!;
 
     public ICollection<Pay> Pays { get; set; } = null!;
+    
+    public ICollection<ReturnPay> ReturnPays { get; set; } = null!;
 }
