@@ -90,8 +90,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrderCommandHandler, OrderCommandHandler>();
         services.AddScoped<IOrderQueryHandler, OrderQueryHandler>();
         services.AddScoped<IPayCommandHandler, PayCommandHandler>();
+        services.AddScoped<IReturnCommandHandler, ReturnCommandHandler>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IReturnService, ReturnService>();
         services.AddScoped<SecurityService>();
         services.AddSingleton<CheckOrderService>();
         services.AddMemoryCache();

@@ -10,7 +10,7 @@ public interface IReturnCommandHandler
     Task ReturnPointsUser(int seatId, int orderId, int points);
 }
 
-public class ReturnCommandHandler
+public class ReturnCommandHandler : IReturnCommandHandler
 {
     private readonly CinePlusContext _context;
 
