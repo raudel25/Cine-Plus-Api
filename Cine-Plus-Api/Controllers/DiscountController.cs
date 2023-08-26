@@ -27,10 +27,16 @@ public class DiscountController : ControllerBase
         this._securityService = securityService;
     }
 
-    [HttpGet]
-    public async Task<IEnumerable<Discount>> Get()
+    [HttpGet,Authorize]
+    public async Task<ActionResult<IEnumerable<Discount>>> Get([FromHeader] string authorization)
     {
-        return await this._discountQuery.Handler();
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
+        if (!responseSecurity.Ok)
+            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
+
+        var result= await this._discountQuery.Handler();
+
+        return result.ToList();
     }
 
     [HttpPost, Authorize]

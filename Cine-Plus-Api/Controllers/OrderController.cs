@@ -1,5 +1,4 @@
 using Cine_Plus_Api.Commands;
-using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Queries;
 using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Responses;
@@ -16,24 +15,11 @@ public class OrderController : ControllerBase
 
     private readonly SecurityService _securityService;
 
-    private readonly ISeatQueryHandler _seatQuery;
-
-    private readonly ISeatCommandHandler _seatCommand;
-
     public OrderController(SecurityService securityService,
         IOrderService orderService, ISeatQueryHandler seatQuery, ISeatCommandHandler seatCommand)
     {
         this._securityService = securityService;
         this._orderService = orderService;
-        this._seatQuery = seatQuery;
-        this._seatCommand = seatCommand;
-    }
-
-    [HttpGet("{showMovieId:int}")]
-    public async Task<IEnumerable<Seat>> Get(int showMovieId)
-    {
-        await this._seatCommand.UpdateSeats();
-        return await this._seatQuery.AvailableSeat(showMovieId);
     }
 
     [HttpPost]

@@ -27,10 +27,16 @@ public class CinemaController : ControllerBase
         this._securityService = securityService;
     }
 
-    [HttpGet]
-    public async Task<IEnumerable<Cinema>> Get()
+    [HttpGet, Authorize]
+    public async Task<ActionResult<IEnumerable<Cinema>>> Get([FromBody] string authorization)
     {
-        return await this._cinemaQuery.Handler();
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
+        if (!responseSecurity.Ok)
+            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
+
+        var result= await this._cinemaQuery.Handler();
+
+        return result.ToList();
     }
 
     [HttpPost, Authorize]

@@ -19,18 +19,38 @@ public class ShowMovieController : ControllerBase
 
     private readonly SecurityService _securityService;
 
+    private readonly ISeatQueryHandler _seatQuery;
+
+    private readonly ISeatCommandHandler _seatCommand;
+
+
     public ShowMovieController(IShowMovieCommandHandler showMovieCommand, IShowMovieQueryHandler showMovieQuery,
-        SecurityService securityService)
+        SecurityService securityService, ISeatCommandHandler seatCommand, ISeatQueryHandler seatQuery)
     {
         this._showMovieCommand = showMovieCommand;
         this._showMovieQuery = showMovieQuery;
         this._securityService = securityService;
+        this._seatQuery = seatQuery;
+        this._seatCommand = seatCommand;
     }
 
-    [HttpGet]
-    public async Task<IEnumerable<ShowMovie>> Get()
+    [HttpGet, Authorize]
+    public async Task<ActionResult<IEnumerable<ShowMovie>>> Get([FromHeader] string authorization)
     {
-        return await this._showMovieQuery.Handler();
+        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
+        if (!responseSecurity.Ok)
+            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
+
+        var result = await this._showMovieQuery.Handler();
+
+        return result.ToList();
+    }
+
+    [HttpGet("{showMovieId:int}")]
+    public async Task<IEnumerable<Seat>> Get(int showMovieId)
+    {
+        await this._seatCommand.UpdateSeats();
+        return await this._seatQuery.AvailableSeat(showMovieId);
     }
 
     [HttpGet("Available")]

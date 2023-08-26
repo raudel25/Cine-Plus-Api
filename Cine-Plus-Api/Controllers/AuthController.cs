@@ -116,53 +116,6 @@ public class AuthController : ControllerBase
         return StatusCode((int)responseEmploy.Status, new { message = responseEmploy.Message });
     }
 
-    [HttpPost("manager/register"), Authorize]
-    public async Task<ActionResult<CreateSystemUserResponse>> CreateManager([FromHeader] string authorization)
-    {
-        var responseSecurity = this._securityService.Authorize(authorization, new AdminAccount());
-        if (!responseSecurity.Ok)
-            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
-
-        return await this._authCommand.Manager();
-    }
-
-    [HttpPost("manager/login")]
-    public async Task<ActionResult<AuthResponse>> LoginManager(Login request)
-    {
-        var manager = await this._authQuery.Manager(request.User);
-
-        if (manager is null || manager.Password != request.Password)
-            return BadRequest(new { message = "Incorrect email or password" });
-
-        var token = this._securityService.JwtAuth(manager.Id, "Manager", new ManagerAccount());
-
-        return new AuthResponse(manager.Id, "Manager", token, new ManagerAccount());
-    }
-
-    [HttpDelete("manager/{id:int}")]
-    public async Task<IActionResult> DeleteManager(int id, [FromHeader] string authorization)
-    {
-        var responseSecurity = this._securityService.Authorize(authorization, new AdminAccount());
-        if (!responseSecurity.Ok)
-            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
-
-        var responseManager = await this._authCommand.Manager(id);
-        if (responseManager.Ok) return Ok();
-
-        return StatusCode((int)responseManager.Status, new { message = responseManager.Message });
-    }
-
-    [HttpPost("admin")]
-    public ActionResult<AuthResponse> Admin(Login request)
-    {
-        var auth = this._securityService.AdminCredentials(request.User, request.Password);
-        if (!auth) return BadRequest(new { message = "Incorrect email or password" });
-
-        var token = this._securityService.JwtAuth(0, "Admin", new AdminAccount());
-
-        return new AuthResponse(0, "Admin", token, new AdminAccount());
-    }
-
     [HttpGet("renew"), Authorize]
     public ActionResult<AuthResponse> Renew([FromHeader] string authorization)
     {
