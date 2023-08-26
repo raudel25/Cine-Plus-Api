@@ -100,6 +100,7 @@ public class SeatCommandHandler : ISeatCommandHandler
 
         seat.State = SeatState.Available;
         seat.Discounts = new List<Discount>();
+        seat.Orders = new List<Order>();
 
         this._context.Seats.Update(seat);
         await this._context.SaveChangesAsync();

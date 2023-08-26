@@ -140,7 +140,7 @@ public class PaymentService : IPaymentService
         await this._orderCommand.Pay(order);
         await this._payCommand.PointsUser(id, userId);
         await PaidSeats(order);
-        await DiscountPointsUser(user, order.PricePoints);
+        await DiscountPointsUser(user.Id, order.PricePoints);
 
         return responsePaidSeats;
     }
@@ -162,7 +162,7 @@ public class PaymentService : IPaymentService
         await this._orderCommand.Pay(order);
         await this._payCommand.TicketPointsUser(order.Id, employId, userId);
         await PaidSeats(order);
-        await DiscountPointsUser(user, order.PricePoints);
+        await DiscountPointsUser(user.Id, order.PricePoints);
 
         if (userId != -1) await AddPointsUser(userId, order.AddPoints);
 
@@ -226,16 +226,11 @@ public class PaymentService : IPaymentService
 
     private async Task<ApiResponse> AddPointsUser(int id, int points)
     {
-        var user = await this._authQuery.UserId(id);
-        if (user is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found user");
-
-        await this._authCommand.User(user, user.Points += points);
-
-        return new ApiResponse();
+        return await this._authCommand.User(id, points);
     }
 
-    private async Task DiscountPointsUser(User user, int points)
+    private async Task DiscountPointsUser(int id, int points)
     {
-        await this._authCommand.User(user, user.Points -= points);
+        await this._authCommand.User(id, -points);
     }
 }

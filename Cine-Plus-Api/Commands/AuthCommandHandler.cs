@@ -14,7 +14,7 @@ public interface IAuthCommandHandler
 
     Task<ApiResponse> User(UpdateUser request);
 
-    Task User(User user, int points);
+    Task<ApiResponse> User(int id, int points);
 
     Task<CreateEmployResponse> Employ();
 
@@ -72,11 +72,16 @@ public class AuthCommandHandler : IAuthCommandHandler
         return new ApiResponse();
     }
 
-    public async Task User(User user, int points)
+    public async Task<ApiResponse> User(int id, int points)
     {
-        user.Points = points;
+        var user = await this._authQuery.UserId(id);
+        if (user is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found user");
+
+        user.Points += points;
         this._context.Users.Update(user);
         await this._context.SaveChangesAsync();
+
+        return new ApiResponse();
     }
 
 

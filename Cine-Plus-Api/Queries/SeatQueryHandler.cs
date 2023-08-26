@@ -14,6 +14,8 @@ public interface ISeatQueryHandler
 
     Task<Seat?> HandlerDiscounts(int id);
 
+    Task<Seat?> HandlerOrder(int id);
+
     Task<Seat?> HandlerShowMovie(int id);
 
     Task<Seat?> HandlerShowMovieDiscounts(int id);
@@ -59,6 +61,12 @@ public class SeatQueryHandler : ISeatQueryHandler
     public async Task<Seat?> HandlerShowMovie(int id)
     {
         return await this._context.Seats.Include(seat => seat.ShowMovie)
+            .SingleOrDefaultAsync(seat => seat.Id == id);
+    }
+
+    public async Task<Seat?> HandlerOrder(int id)
+    {
+        return await this._context.Seats.Include(seat => seat.Orders)
             .SingleOrDefaultAsync(seat => seat.Id == id);
     }
 }
