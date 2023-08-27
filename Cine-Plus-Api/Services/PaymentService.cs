@@ -180,13 +180,12 @@ public class PaymentService : IPaymentService
 
             var token = response.Value;
 
-            list.Add(new ResponsePaidSeat
-            {
-                Id = seat.Id, Token = token,
-                Description = token is null
+            list.Add(new ResponsePaidSeat(
+                seat.Id, token,
+                token is null
                     ? "This pay has not been canceled"
                     : "This payment can be canceled up to two hours before of the show movie"
-            });
+            ));
         }
 
         return new ApiResponse<IEnumerable<ResponsePaidSeat>>(list);
@@ -201,15 +200,10 @@ public class PaymentService : IPaymentService
         if (seatDiscounts is null || seatShowMovie is null)
             return new ApiResponse<string?>(HttpStatusCode.BadRequest, "Incorrect pay");
 
-        var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seatShowMovie.ShowMovie.Date);
-        var date = dateTimeOffset.DateTime;
-
+        var date = Date.LongToDateTime(seatShowMovie.ShowMovie.Date);
         var expire = date.Subtract(TimeSpan.FromHours(2));
 
-        var now = DateTime.UtcNow;
-        var possible = now <= expire;
-
-        return new ApiResponse<string?>(possible
+        return new ApiResponse<string?>(Date.Available(expire)
             ? this._securityService.JwtPay(id, CancelPayment, Calculate.CalculatePrice(seatDiscounts),
                 Calculate.CalculatePricePoints(seatDiscounts), seatDiscounts.AddPoints,
                 expire)

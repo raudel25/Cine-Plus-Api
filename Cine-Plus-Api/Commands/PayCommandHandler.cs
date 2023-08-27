@@ -1,3 +1,4 @@
+using Cine_Plus_Api.Helpers;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Requests;
 using Cine_Plus_Api.Services;
@@ -26,9 +27,8 @@ public class PayCommandHandler : IPayCommandHandler
 
     public async Task CreditCard(int id, PayCreditCard request)
     {
-        var now = DateTime.UtcNow;
         var creditCard = new CreditCard
-            { Card = request.CreditCard, Date = ((DateTimeOffset)now).ToUnixTimeSeconds(), OrderId = id };
+            { Card = request.CreditCard, Date = Date.NowLong(), OrderId = id };
 
         this._context.CreditCards.Add(creditCard);
         await this._context.SaveChangesAsync();
@@ -36,9 +36,8 @@ public class PayCommandHandler : IPayCommandHandler
 
     public async Task Ticket(int id, int employId)
     {
-        var now = DateTime.UtcNow;
         var ticket = new Ticket
-            { EmployId = employId, Date = ((DateTimeOffset)now).ToUnixTimeSeconds(), OrderId = id };
+            { EmployId = employId, Date = Date.NowLong(), OrderId = id };
 
         this._context.Tickets.Add(ticket);
         await this._context.SaveChangesAsync();
@@ -46,19 +45,17 @@ public class PayCommandHandler : IPayCommandHandler
 
     public async Task PointsUser(int id, int userId)
     {
-        var now = DateTime.UtcNow;
         var pointsUser = new PointsUser
-            { UserId = userId, Date = ((DateTimeOffset)now).ToUnixTimeSeconds(), OrderId = id };
+            { UserId = userId, Date = Date.NowLong(), OrderId = id };
 
         this._context.PointsUsers.Add(pointsUser);
         await this._context.SaveChangesAsync();
     }
-    
-    public async Task TicketPointsUser(int id,int employId, int userId)
+
+    public async Task TicketPointsUser(int id, int employId, int userId)
     {
-        var now = DateTime.UtcNow;
-        var ticketPointsUser = new TicketPointsUser()
-            { UserId = userId,EmployId = employId,Date = ((DateTimeOffset)now).ToUnixTimeSeconds(), OrderId = id };
+        var ticketPointsUser = new TicketPointsUser
+            { UserId = userId, EmployId = employId, Date = Date.NowLong(), OrderId = id };
 
         this._context.TicketPointsUsers.Add(ticketPointsUser);
         await this._context.SaveChangesAsync();

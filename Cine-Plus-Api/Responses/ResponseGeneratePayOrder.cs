@@ -2,28 +2,38 @@ namespace Cine_Plus_Api.Responses;
 
 public class ResponseGeneratePayOrder
 {
-    public int Id { get; set; }
-    
-    public bool Ok => this.Token is not null;
-
     public string? Token { get; set; }
 
-    public double Price { get; set; }
-    
-    public int PricePoints { get; set; }
-    
-    public int AddPoints { get; set; }
-    
-    public long Date { get; set; }
+    public double Price { get; private set; }
+
+    public int PricePoints { get; private set; }
+
+    public int AddPoints { get; private set; }
+
+    public long Date { get; private set; }
 
     public ICollection<ResponseSeatOrder> Seats { get; set; } = null!;
+
+    public ResponseGeneratePayOrder(double price, int pricePoints, int addPoints, ICollection<ResponseSeatOrder> seats,
+        long date)
+    {
+        this.Price = price;
+        this.PricePoints = pricePoints;
+        this.AddPoints = addPoints;
+        this.Date = date;
+        this.Seats = seats;
+    }
 }
 
 public class ResponseSeatOrder
 {
     public int Id { get; set; }
 
-    public bool Ok => this.Message == "Ok";
+    public string Message { get; set; }
 
-    public string Message { get; set; } = null!;
+    public ResponseSeatOrder(int id, string message)
+    {
+        this.Id = id;
+        this.Message = message;
+    }
 }

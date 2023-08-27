@@ -28,7 +28,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("employ/register"), Authorize]
-    public async Task<ActionResult<CreateEmployResponse>> CreateEmploy([FromHeader] string authorization)
+    public async Task<ActionResult<CreateSystemUserResponse>> CreateEmploy([FromHeader] string authorization)
     {
         var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
         if (!responseSecurity.Ok)

@@ -1,4 +1,5 @@
 using System.Net;
+using Cine_Plus_Api.Helpers;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Queries;
 using Cine_Plus_Api.Requests;
@@ -51,7 +52,7 @@ public class SeatCommandHandler : ISeatCommandHandler
     {
         var available = await this._context.Seats.Include(seat => seat.ShowMovie).ToListAsync();
 
-        var notAvailable = available.Where(seat => !ShowMovieQueryHandler.AvailableShowMovie(seat.ShowMovie));
+        var notAvailable = available.Where(seat => !Date.Available(seat.ShowMovie.Date));
 
         await NotBought(notAvailable);
     }
@@ -61,7 +62,7 @@ public class SeatCommandHandler : ISeatCommandHandler
         var showMovie = await this._showMovieQuery.Handler(seat.ShowMovieId);
         if (showMovie is null) return new ApiResponse(HttpStatusCode.NotFound, "Not found show movie");
 
-        if (!ShowMovieQueryHandler.AvailableShowMovie(showMovie))
+        if (!Date.Available(showMovie.Date))
             return new ApiResponse(HttpStatusCode.BadRequest, "The date of show movie has been expired");
 
         if (seat.State != SeatState.Available)

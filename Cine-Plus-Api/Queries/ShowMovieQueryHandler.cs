@@ -1,4 +1,5 @@
 using System.Net;
+using Cine_Plus_Api.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Responses;
@@ -40,7 +41,7 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
     public async Task<IEnumerable<ShowMovie>> AvailableShowMovie()
     {
         var list = await this._context.ShowMovies.ToListAsync();
-        return list.Where(AvailableShowMovie);
+        return list.Where(showMovie => Date.Available(showMovie.Date));
     }
 
     public async Task<IEnumerable<ShowMovie>> Handler()
@@ -76,21 +77,13 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
         return (start <= startMovie && startMovie <= end) || (end <= startMovie && endMovie <= end);
     }
 
-    public static bool AvailableShowMovie(ShowMovie showMovie)
-    {
-        var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(showMovie.Date);
-        var date = dateTimeOffset.DateTime;
-
-        return DateTime.UtcNow <= date;
-    }
-
     public async Task<ICollection<ShowMovie>> AvailableMovie(int id)
     {
         var result = await this._context.ShowMovies
             .Where(showMovie => showMovie.MovieId == id)
             .ToListAsync();
 
-        return result.Where(AvailableShowMovie).ToList();
+        return result.Where(showMovie => Date.Available(showMovie.Date)).ToList();
     }
 
     public async Task<ICollection<ShowMovie>> AvailableDiscount(int id)
@@ -98,7 +91,9 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
         var discount = await this._context.Discounts.Include(discount => discount.ShowMovies)
             .SingleOrDefaultAsync(discount => discount.Id == id);
 
-        return discount is null ? new List<ShowMovie>() : discount.ShowMovies.Where(AvailableShowMovie).ToList();
+        return discount is null
+            ? new List<ShowMovie>()
+            : discount.ShowMovies.Where(showMovie => Date.Available(showMovie.Date)).ToList();
     }
 
     public async Task<ICollection<ShowMovie>> AvailableCinema(int id)
@@ -107,6 +102,6 @@ public class ShowMovieQueryHandler : IShowMovieQueryHandler
             .Where(showMovie => showMovie.CinemaId == id)
             .ToListAsync();
 
-        return result.Where(AvailableShowMovie).ToList();
+        return result.Where(showMovie => Date.Available(showMovie.Date)).ToList();
     }
 }

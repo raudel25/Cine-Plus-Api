@@ -1,3 +1,4 @@
+using Cine_Plus_Api.Helpers;
 using Cine_Plus_Api.Models;
 using Cine_Plus_Api.Services;
 
@@ -21,9 +22,8 @@ public class ReturnCommandHandler : IReturnCommandHandler
 
     public async Task ReturnCreditCard(int seatId, int orderId, double amount)
     {
-        var now = DateTime.UtcNow;
         var returnPay = new ReturnCreditCard
-            { Date = ((DateTimeOffset)now).ToUnixTimeSeconds(), OrderId = orderId, SeatId = seatId, Amount = amount };
+            { Date = Date.NowLong(), OrderId = orderId, SeatId = seatId, Amount = amount };
 
         this._context.ReturnCreditCards.Add(returnPay);
         await this._context.SaveChangesAsync();
@@ -31,9 +31,8 @@ public class ReturnCommandHandler : IReturnCommandHandler
 
     public async Task ReturnPointsUser(int seatId, int orderId, int points)
     {
-        var now = DateTime.UtcNow;
         var returnPay = new ReturnPointsUser
-            { Date = ((DateTimeOffset)now).ToUnixTimeSeconds(), OrderId = orderId, SeatId = seatId, Points = points };
+            { Date = Date.NowLong(), OrderId = orderId, SeatId = seatId, Points = points };
 
         this._context.ReturnPointsUsers.Add(returnPay);
         await this._context.SaveChangesAsync();

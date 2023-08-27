@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("user/register")]
-    public async Task<ActionResult<AuthResponse>> CreateUser(CreateUser request)
+    public async Task<ActionResult<AuthUserResponse>> CreateUser(CreateUser request)
     {
         request.Password = Password.EncryptPassword(request.Password);
 
@@ -49,11 +49,11 @@ public class AuthController : ControllerBase
 
         var token = this._securityService.JwtAuth(response.Value, request.Name, new UserAccount());
 
-        return new AuthResponse(response.Value, request.Name, token, new UserAccount());
+        return new AuthUserResponse(response.Value, request.Name, token, new UserAccount(), 0);
     }
 
     [HttpPut("user/update"), Authorize]
-    public async Task<ActionResult<AuthResponse>> UpdateUser([FromHeader] string authorization, UpdateUser request)
+    public async Task<IActionResult> UpdateUser([FromHeader] string authorization, UpdateUser request)
     {
         var responseAuth = this._securityService.DecodingAuth(authorization);
         if (!responseAuth.Ok) return StatusCode((int)responseAuth.Status, new { message = responseAuth.Message });
@@ -68,7 +68,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("user/login")]
-    public async Task<ActionResult<AuthResponse>> LoginUser(Login request)
+    public async Task<ActionResult<AuthUserResponse>> LoginUser(Login request)
     {
         var user = await this._authQuery.UserEmail(request.User);
 
@@ -77,43 +77,7 @@ public class AuthController : ControllerBase
 
         var token = this._securityService.JwtAuth(user.Id, user.Name, new UserAccount());
 
-        return new AuthResponse(user.Id, user.Name, token, new UserAccount());
-    }
-
-    [HttpPost("employ/register"), Authorize]
-    public async Task<ActionResult<CreateEmployResponse>> CreateEmploy([FromHeader] string authorization)
-    {
-        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
-        if (!responseSecurity.Ok)
-            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
-
-        return await this._authCommand.Employ();
-    }
-
-    [HttpPost("employ/login")]
-    public async Task<ActionResult<AuthResponse>> LoginEmploy(Login request)
-    {
-        var employ = await this._authQuery.Employ(request.User);
-
-        if (employ is null || employ.Password != request.Password)
-            return BadRequest(new { message = "Incorrect email or password" });
-
-        var token = this._securityService.JwtAuth(employ.Id, "Employ", new EmployAccount());
-
-        return new AuthResponse(employ.Id, "Employ", token, new EmployAccount());
-    }
-
-    [HttpDelete("employ/{id:int}"), Authorize]
-    public async Task<IActionResult> DeleteEmploy(int id, [FromHeader] string authorization)
-    {
-        var responseSecurity = this._securityService.Authorize(authorization, new ManagerAccount());
-        if (!responseSecurity.Ok)
-            return StatusCode((int)responseSecurity.Status, new { message = responseSecurity.Message });
-
-        var responseEmploy = await this._authCommand.Employ(id);
-        if (responseEmploy.Ok) return Ok();
-
-        return StatusCode((int)responseEmploy.Status, new { message = responseEmploy.Message });
+        return new AuthUserResponse(user.Id, user.Name, token, new UserAccount(), user.Points);
     }
 
     [HttpGet("renew"), Authorize]

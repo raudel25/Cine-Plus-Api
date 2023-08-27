@@ -16,7 +16,7 @@ public interface IAuthCommandHandler
 
     Task<ApiResponse> AddPointsUser(int id, int points);
 
-    Task<CreateEmployResponse> Employ();
+    Task<CreateSystemUserResponse> Employ();
 
     Task<CreateSystemUserResponse> Manager();
 
@@ -85,7 +85,7 @@ public class AuthCommandHandler : IAuthCommandHandler
     }
 
 
-    public async Task<CreateEmployResponse> Employ()
+    public async Task<CreateSystemUserResponse> Employ()
     {
         var number = await this._authQuery.MaxEmploy() + 1;
         var password = Password.RandomPassword();
@@ -96,7 +96,7 @@ public class AuthCommandHandler : IAuthCommandHandler
         this._context.Employs.Add(employ);
         await this._context.SaveChangesAsync();
 
-        return new CreateEmployResponse { User = user, Password = password };
+        return new CreateSystemUserResponse(user, password);
     }
 
     public async Task<CreateSystemUserResponse> Manager()
@@ -110,7 +110,7 @@ public class AuthCommandHandler : IAuthCommandHandler
         this._context.Managers.Add(manager);
         await this._context.SaveChangesAsync();
 
-        return new CreateSystemUserResponse { User = user, Password = password };
+        return new CreateSystemUserResponse(user, password);
     }
 
     public async Task<ApiResponse> Employ(int id)

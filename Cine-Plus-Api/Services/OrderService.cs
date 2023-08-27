@@ -57,9 +57,6 @@ public class OrderService : IOrderService
             responsePay.AddPoints, DateTime.UtcNow.AddMinutes(10));
         responsePay.Token = token;
 
-        var now = DateTime.UtcNow;
-        responsePay.Date = ((DateTimeOffset)now).ToUnixTimeSeconds();
-
         this._checkOrderService.Add(order.Id.ToString(), order.Id, TimeSpan.FromMinutes(10));
 
         return responsePay;
@@ -73,8 +70,7 @@ public class OrderService : IOrderService
         var pricePoints = validSeats.Select(Calculate.CalculatePricePoints).Sum();
         var addPoints = validSeats.Select(seat => seat.AddPoints).Sum();
 
-        var responsePay = new ResponseGeneratePayOrder
-            { Seats = seatsResponse, Price = price, PricePoints = pricePoints, AddPoints = addPoints };
+        var responsePay = new ResponseGeneratePayOrder(price, pricePoints, addPoints, seatsResponse, Date.NowLong());
 
         if (validSeats.Count == 0) return (responsePay, null);
 
@@ -125,7 +121,7 @@ public class OrderService : IOrderService
             if (response.Ok)
                 validSeats.Add(response.Value!);
 
-            seatsResponse.Add(new ResponseSeatOrder { Id = seat.Id, Message = response.Ok ? "Ok" : response.Message! });
+            seatsResponse.Add(new ResponseSeatOrder(seat.Id, response.Ok ? "Ok" : response.Message!));
         }
 
         return (validSeats, seatsResponse);
